@@ -1,14 +1,10 @@
 const express = require("express");
 const {
-  httpRegisterMail,
-  httpFeesConfirmMail,
-  httpPendingFees,
+  httpScoreboardLinkMail
 } = require("./mail.controller");
 
 const mailRouter = express.Router();
 
-mailRouter.post("/studentRegister", httpRegisterMail);
-mailRouter.post("/feesRecipet", httpFeesConfirmMail);
-mailRouter.post("/pendingStudent", httpPendingFees);
+mailRouter.post("/scoreboard-link", httpScoreboardLinkMail);
 
 module.exports = mailRouter;

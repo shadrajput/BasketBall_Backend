@@ -1,17 +1,18 @@
-const mongoose = require("mongoose");
-const {MONGODB_URL} = require('../../constant')
+const {MONGODB_URL, POSTGRE_USER, POSTGRE_PASSWORD} = require('../../constant')
+const {Pool} = require('pg')
 
+const pool = new Pool({
+  user: POSTGRE_USER,
+  password: POSTGRE_PASSWORD,
+  host: 'localhost',
+  post: 5432,
+  database: 'CBL'
+})
 async function startDatabase(){
-  mongoose
-    .connect(MONGODB_URL)
-    .then(() => {
-      console.log("Connected to database");
-      return true;
-    })
-    .catch((err) => {
-      console.log("Something went wrong, can't connect to database");
-      return false;
-    });
+  pool.connect((err)=>{
+    if(err) console.log(err)
+    else console.log('Connected to database')
+  })
 }
 
 module.exports = {startDatabase};

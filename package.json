@@ -1,5 +1,5 @@
 {
-  "name": "Nasir Sir And Classes",
+  "name": "cbl_api",
   "version": "1.0.0",
   "description": "this is te api of NSC",
   "main": "server.js",
@@ -21,14 +21,11 @@
     "formidable": "^2.0.1",
     "imagekit": "^4.1.2",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^6.5.4",
     "nodemailer": "^6.8.0",
     "nodemon": "^2.0.19",
-    "portfinder": "^1.0.32",
-    "qrcode-terminal": "^0.12.0",
+    "pg": "^8.9.0",
     "react-html-table-to-excel": "^2.0.0",
-    "validator": "^13.7.0",
-    "whatsapp-web.js": "^1.17.1"
+    "validator": "^13.7.0"
   },
   "devDependencies": {
     "bcrypt": "^5.0.1",

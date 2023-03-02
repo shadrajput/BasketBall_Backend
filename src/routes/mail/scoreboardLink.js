@@ -17,16 +17,14 @@ const Email = (options) => {
     }
   });
 };
-// send email
-const FeesSender = ({ email, full_name, amount, admin, studentID, net_fees, class_name, date }) => {
 
-  let receipDate = new Date(date)
-  receipDate = `${receipDate.getDate() < 10 ? "0" + receipDate.getDate() : receipDate.getDate()}-${receipDate.getMonth() + 1 < 10 ? "0" + (receipDate.getMonth() + 1) : receipDate.getMonth() + 1}-${receipDate.getFullYear()}`;
+// send email
+const ScoreboardLinkSender = ({ email, link }) => {
 
   const options = {
-    from: `Nasir Sir Classes 👨‍🏫 <${USER}>`,
+    from: `Corporate Basketball League <${USER}>`,
     to: `${email}`,
-    subject: "Thank you for your payment",
+    subject: "Scoreboard Access",
     html: `
         <div style="width: 100%; background-color: #f3f9ff; padding: 5rem 0">
         <div style="max-width: 700px; background-color: white; margin: 0 auto">
@@ -39,18 +37,12 @@ const FeesSender = ({ email, full_name, amount, admin, studentID, net_fees, clas
           </div>
           <div style="width: 100%; gap: 10px; padding: 30px 0; display: grid">
             <p style="font-weight: 800; font-size: 1.2rem; padding: 0 30px">
-                    Payment Successfull
+                    Here is your CBL scoreboard link
             </p>
             <div style="font-size: .8rem; margin: 0 30px">
-            <h3> Student ID: ${studentID} </h3>
-            <h3> Class: ${class_name.toUpperCase()} </h3>
-            <h3> Total Fees: ${net_fees} </h3>
-            <h3> Hello, ${full_name.toUpperCase()} </h3>
-            <p>Thank you for your tuition fees. We're glad to have you as a student at Nasir sir classes. We hope that this will be a great experience for you.</p>
-            <p>Amount Paid <span style="font-weight: 600">Rs ${amount} </span> by ${admin}</p>
-            <p>Date : ${receipDate} </p>
+            <h3> Link: ${link} </h3>
              <p style="font-weight:800">Thank You   </p>
-              <p style="font-weight:800" >Team Nasir Sir</b></p>
+              <p style="font-weight:800" >Team CBL</b></p>
             </div>
           </div>
         </div>
@@ -59,4 +51,4 @@ const FeesSender = ({ email, full_name, amount, admin, studentID, net_fees, clas
   };
   Email(options);
 };
-module.exports = FeesSender;
+module.exports = ScoreboardLinkSender;
