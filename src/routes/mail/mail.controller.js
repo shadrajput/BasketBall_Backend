@@ -1,19 +1,17 @@
+const catchAsyncErrors = require("../../middlewares/catchAsyncErrors");
 const ScoreboardLinkSender = require("./scoreboardLink");
+const ErrorHandler = require('../../utils/ErrorHandler');
 
-async function httpScoreboardLinkMail(req, res) {
+const httpScoreboardLinkMail = catchAsyncErrors(async (req, res, next) => {
   const data = req.body;
   if (!data.email) {
-    return res.status(400).json({ error: "please Provide email" });
+    return next(new ErrorHandler("Please provide your email", 400))
   }
-  try {
-    const { email } = req.body;
-    const link = "https://www.wellbenix.com"
-    const data = await ScoreboardLinkSender({ email, link });
-    return res.status(200).json({ msg: "Message sent successfully" });
-  } catch (error) {
-    return res.status(500).json(error.message);
-  }
-}
+  const { email } = req.body;
+  const link = "https://www.wellbenix.com"
+  await ScoreboardLinkSender({ email, link });
+  return res.status(200).json({ msg: "Message sent successfully" });
+})
 
 module.exports = {
   httpScoreboardLinkMail,

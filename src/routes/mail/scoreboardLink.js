@@ -1,5 +1,4 @@
 const nodemailer = require("nodemailer");
-const {USER, PASSWORD} = require('../../../constant')
 
 const Email = (options) => {
   let transpoter = nodemailer.createTransport({
@@ -7,8 +6,8 @@ const Email = (options) => {
     port: 465,
 
     auth: {
-      user: USER, // email
-      pass: PASSWORD, //password
+      user: process.env.USER, // email
+      pass: process.env.PASSWORD, //password
     },
   });
   transpoter.sendMail(options, (err, info) => {
@@ -22,7 +21,7 @@ const Email = (options) => {
 const ScoreboardLinkSender = ({ email, link }) => {
 
   const options = {
-    from: `Corporate Basketball League <${USER}>`,
+    from: `Corporate Basketball League <${process.env.USER}>`,
     to: `${email}`,
     subject: "Scoreboard Access",
     html: `

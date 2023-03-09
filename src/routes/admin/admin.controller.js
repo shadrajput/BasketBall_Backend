@@ -1,8 +1,6 @@
 const bcrypt = require("bcrypt");
 const {
-  GenrateToken,
   createToken,
-  verifyToken,
 } = require("../../middlewares/auth");
 
 
