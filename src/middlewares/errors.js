@@ -7,6 +7,7 @@ module.exports = (err,req,res,next)=>{
     
 
     if (err instanceof Prisma.PrismaClientValidationError) {
+        console.log(err)
         const message = `Invalid data entered`;
         err = new ErrorHandler(message,400)
     }
