@@ -1,12 +1,18 @@
 const ErrorHandler = require("../utils/ErrorHandler");
+const {Prisma} = require('@prisma/client')
 
 module.exports = (err,req,res,next)=>{
     err.statusCode = err.statusCode || 500;
     err.message = err.message || "Internal server error";
+    
 
-    // Wrong mongodb id error
-    if(err.name === "CastError"){
-        const message = `Resource not found. Invalid: ${err.path}`;
+    if (err instanceof Prisma.PrismaClientValidationError) {
+        const message = `Invalid data entered`;
+        err = new ErrorHandler(message,400)
+    }
+
+    if (err instanceof Prisma.PrismaClientUnknownRequestError) {
+        const message = `Unique constraint violation`;
         err = new ErrorHandler(message,400)
     }
 

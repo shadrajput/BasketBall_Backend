@@ -1,7 +1,7 @@
 const express = require("express");
 const {imagekitAuth} = require("./imagekit.controller")
-const imagekitAuthRouter = express.Router();
+const router = express.Router();
 
-imagekitAuthRouter.get("/auth", imagekitAuth);
+router.get("/auth", imagekitAuth);
 
-module.exports = imagekitAuthRouter
+module.exports = router

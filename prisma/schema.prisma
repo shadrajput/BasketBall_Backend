@@ -7,235 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model gallery {
-  id            BigInt       @id @default(autoincrement())
-  tournament_id BigInt?
-  photo         String
-  category      String
-  priority      Int          @default(0)
-  created_at    DateTime     @default(now()) @db.Timestamp(6)
-  tournaments   tournaments? @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
-}
-
-model match_player_fouls {
-  id          BigInt   @id @default(autoincrement())
-  match_id    BigInt
-  player_id   BigInt
-  total_fouls Int      @default(0)
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-  matches     matches  @relation(fields: [match_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "maches_table")
-  players     players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
-}
-
-model match_quarters {
-  id                                                              BigInt        @id @default(autoincrement())
-  match_id                                                        BigInt
-  team_1_points                                                   Int
-  team_2_points                                                   Int
-  team_1_fouls                                                    Int           @default(0)
-  team_2_fouls                                                    Int           @default(0)
-  quarter_number                                                  Int?
-  won_by_team_id                                                  BigInt?
-  status                                                          Int           @default(2)
-  timeline_start_score_id                                         BigInt?
-  timeline_end_score_id                                           BigInt?
-  created_at                                                      DateTime      @default(now()) @db.Timestamp(6)
-  matches                                                         matches       @relation(fields: [match_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_table")
-  teams                                                           teams?        @relation(fields: [won_by_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
-  match_score_match_quarters_timeline_end_score_idTomatch_score   match_score?  @relation("match_quarters_timeline_end_score_idTomatch_score", fields: [timeline_end_score_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "timeline_end_score_table_id")
-  match_score_match_quarters_timeline_start_score_idTomatch_score match_score?  @relation("match_quarters_timeline_start_score_idTomatch_score", fields: [timeline_start_score_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "timeline_start_score_table_id")
-  match_score_match_score_quarted_idTomatch_quarters              match_score[] @relation("match_score_quarted_idTomatch_quarters")
-}
-
-model match_score {
-  id                                                                 BigInt           @id @default(autoincrement())
-  team_id                                                            BigInt
-  points                                                             Int
-  point_status                                                       String
-  quarted_id                                                         BigInt
-  created_at                                                         DateTime         @default(now()) @db.Timestamp(6)
-  match_quarters_match_quarters_timeline_end_score_idTomatch_score   match_quarters[] @relation("match_quarters_timeline_end_score_idTomatch_score")
-  match_quarters_match_quarters_timeline_start_score_idTomatch_score match_quarters[] @relation("match_quarters_timeline_start_score_idTomatch_score")
-  match_quarters_match_score_quarted_idTomatch_quarters              match_quarters   @relation("match_score_quarted_idTomatch_quarters", fields: [quarted_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_quarter_table")
-  teams                                                              teams            @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
-}
-
-model matches {
-  id                               BigInt               @id @default(autoincrement())
-  tournament_id                    BigInt
-  team_1_id                        BigInt
-  team_2_id                        BigInt
-  quarters                         Int                  @default(4)
-  start_date_time                  DateTime             @db.Timestamp(6)
-  scorekeeper_id                   BigInt
-  address                          String
-  won_team_id                      BigInt?
-  status                           Int                  @default(1)
-  cancel_reason                    String?
-  round_name                       String?
-  created_at                       DateTime             @default(now()) @db.Timestamp(6)
-  match_player_fouls               match_player_fouls[]
-  match_quarters                   match_quarters[]
-  scorekeeper                      scorekeeper          @relation(fields: [scorekeeper_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "scorekeeper_table")
-  teams_matches_team_1_idToteams   teams                @relation("matches_team_1_idToteams", fields: [team_1_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_1_table")
-  teams_matches_team_2_idToteams   teams                @relation("matches_team_2_idToteams", fields: [team_2_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_2_table")
-  tournaments                      tournaments          @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
-  teams_matches_won_team_idToteams teams?               @relation("matches_won_team_idToteams", fields: [won_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "won_team")
-}
-
-model news {
-  id          BigInt   @id @default(autoincrement())
-  photo       String
-  title       String
-  description String
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-}
-
-model player_ranking {
-  id             BigInt   @id(map: "Player_ranking_pkey") @default(autoincrement())
-  matches_played Int      @default(0)
-  matches_won    Int      @default(0)
-  matches_lost   Int      @default(0)
-  points         Int      @default(0)
-  player_id      BigInt
-  created_at     DateTime @default(now()) @db.Timestamp(6)
-  players        players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
-}
-
-model players {
-  id                 BigInt               @id(map: "Players_pkey") @default(autoincrement())
-  photo              String
-  first_name         String
-  middle_name        String
-  last_name          String
-  alternate_mobile   String
-  gender             String
-  height             Int
-  weight             Int
-  pincode            Int
-  city               String
-  state              String
-  country            String
-  playing_position   String
-  jersey_no          Int
-  about              String
-  user_id            BigInt
-  created_at         DateTime             @default(now())
-  match_player_fouls match_player_fouls[]
-  player_ranking     player_ranking[]
-  users              users                @relation(fields: [user_id], references: [id], map: "Players_user_id_fkey")
-  team_players       team_players[]
-}
-
-model scorekeeper {
-  id                BigInt    @id @default(autoincrement())
-  name              String
-  email             String
-  mobile            String
-  token             String?
-  token_expiry_time DateTime? @db.Timestamp(6)
-  is_token_expired  Boolean?
-  created_at        DateTime  @default(now()) @db.Timestamp(6)
-  matches           matches[]
-}
-
-model team_players {
-  id               BigInt   @id(map: "Team_players_pkey") @default(autoincrement())
-  team_id          BigInt
-  player_id        BigInt
-  is_playing       Boolean
-  playing_position String
-  created_at       DateTime @default(now()) @db.Timestamp(6)
-  players          players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "player_table")
-  teams            teams    @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
-}
-
-model teams {
-  id                                 BigInt             @id(map: "Teams_pkey") @default(autoincrement())
-  logo                               String?
-  team_name                          String
-  coach_name                         String?
-  coach_mobile                       String?
-  asst_coach_name                    String?
-  asst_coach_mobile                  String?
-  about_team                         String?
-  matches_played                     Int                @default(0)
-  matches_won                        Int                @default(0)
-  matches_lost                       Int                @default(0)
-  is_details_editable                Boolean?           @default(true)
-  user_id                            BigInt
-  created_at                         DateTime?          @default(now()) @db.Time(6)
-  match_quarters                     match_quarters[]
-  match_score                        match_score[]
-  matches_matches_team_1_idToteams   matches[]          @relation("matches_team_1_idToteams")
-  matches_matches_team_2_idToteams   matches[]          @relation("matches_team_2_idToteams")
-  matches_matches_won_team_idToteams matches[]          @relation("matches_won_team_idToteams")
-  team_players                       team_players[]
-  users                              users              @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_table")
-  tournament_teams                   tournament_teams[]
-}
-
-model tournament_referees {
-  id            BigInt      @id @default(autoincrement())
-  name          String
-  mobile        String
-  tournament_id BigInt
-  created_at    DateTime    @default(now()) @db.Timestamp(6)
-  tournaments   tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
-}
-
-model tournament_sponsors {
-  id            BigInt      @id @default(autoincrement())
-  tournament_id BigInt
-  logo          String
-  title         String
-  created_at    DateTime    @default(now()) @db.Timestamp(6)
-  tournaments   tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
-}
-
-model tournament_teams {
-  id              BigInt      @id @default(autoincrement())
-  age_categories  String[]
-  is_selected     Int         @default(2)
-  reject_reason   String?
-  points          Int         @default(0)
-  is_disqualified Boolean     @default(false)
-  pool_name       String?
-  gender_type     String
-  tournament_id   BigInt
-  team_id         BigInt
-  created_at      DateTime    @default(now()) @db.Timestamp(6)
-  teams           teams       @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
-  tournaments     tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
-}
-
-model tournaments {
-  id                   BigInt                @id  @default(autoincrement())
-  logo                 String?
-  tournament_name      String
-  address              String
-  start_date           DateTime              @db.Date
-  end_date             DateTime              @db.Date
-  gender_types         String[]
-  age_categories       String[]
-  level                String
-  status               Int                   @default(1)
-  is_approved          Boolean               @default(false)
-  prize                String?
-  is_registration_open Boolean               @default(true)
-  is_details_editable  Boolean               @default(true)
-  user_id              BigInt
-  created_at           DateTime              @default(now()) @db.Timestamp(6)
-  gallery              gallery[]
-  matches              matches[]
-  tournament_referees  tournament_referees[]
-  tournament_sponsors  tournament_sponsors[]
-  tournament_teams     tournament_teams[]
-  users                users                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_table")
-}
-
 model users {
-  id           BigInt        @id(map: "Users_pkey") @default(autoincrement())
+  id           Int        @id(map: "Users_pkey") @default(autoincrement())
   email        String        @unique(map: "Users_email_key")
   name         String
   password     String
@@ -252,3 +25,242 @@ model users {
   teams        teams[]
   tournaments  tournaments[]
 }
+
+model players {
+  id                 Int               @id(map: "Players_pkey") @default(autoincrement())
+  photo              String
+  first_name         String
+  middle_name        String
+  last_name          String
+  alternate_mobile   String
+  gender             String
+  height             Int
+  weight             Int
+  pincode            Int
+  city               String
+  state              String
+  country            String
+  playing_position   String
+  jersey_no          Int
+  about              String
+  user_id            Int
+  created_at         DateTime             @default(now())
+  match_player_fouls match_player_fouls[]
+  player_ranking     player_ranking[]
+  users              users                @relation(fields: [user_id], references: [id], map: "Players_user_id_fkey")
+  team_players       team_players[]
+}
+
+model player_ranking {
+  id             Int   @id(map: "Player_ranking_pkey") @default(autoincrement())
+  matches_played Int      @default(0)
+  matches_won    Int      @default(0)
+  matches_lost   Int      @default(0)
+  points         Int      @default(0)
+  player_id      Int
+  created_at     DateTime @default(now()) @db.Timestamp(6)
+  players        players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
+}
+
+model teams {
+  id                                 Int             @id(map: "Teams_pkey") @default(autoincrement())
+  logo                               String?
+  team_name                          String
+  coach_name                         String?
+  coach_mobile                       String?
+  asst_coach_name                    String?
+  asst_coach_mobile                  String?
+  about_team                         String?
+  matches_played                     Int                @default(0)
+  matches_won                        Int                @default(0)
+  matches_lost                       Int                @default(0)
+  is_details_editable                Boolean?           @default(true)
+  user_id                            Int
+  created_at                         DateTime?          @default(now()) @db.Time(6)
+  match_quarters                     match_quarters[]
+  match_score                        match_score[]
+  matches_matches_team_1_idToteams   matches[]          @relation("matches_team_1_idToteams")
+  matches_matches_team_2_idToteams   matches[]          @relation("matches_team_2_idToteams")
+  matches_matches_won_team_idToteams matches[]          @relation("matches_won_team_idToteams")
+  team_players                       team_players[]
+  users                              users              @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_table")
+  tournament_teams                   tournament_teams[]
+}
+
+model team_players {
+  id               Int   @id(map: "Team_players_pkey") @default(autoincrement())
+  team_id          Int
+  player_id        Int
+  is_playing       Boolean
+  playing_position String
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  players          players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "player_table")
+  teams            teams    @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
+}
+
+model tournaments {
+  id                   Int                @id  @default(autoincrement())
+  logo                 String?
+  tournament_name      String
+  address              String
+  start_date           DateTime              @db.Date
+  end_date             DateTime              @db.Date
+  gender_types         String[]
+  age_categories       String[]
+  level                String
+  status               Int                   @default(1)
+  is_approved          Boolean               @default(false)
+  prize                String?
+  is_registration_open Boolean               @default(true)
+  is_details_editable  Boolean               @default(true)
+  user_id              Int
+  created_at           DateTime              @default(now()) @db.Timestamp(6)
+  gallery              gallery[]
+  matches              matches[]
+  tournament_referees  tournament_referees[]
+  tournament_sponsors  tournament_sponsors[]
+  tournament_teams     tournament_teams[]
+  users                users                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_table")
+}
+
+model tournament_referees {
+  id            Int      @id @default(autoincrement())
+  name          String
+  mobile        String
+  tournament_id Int
+  created_at    DateTime    @default(now()) @db.Timestamp(6)
+  tournaments   tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
+}
+
+model tournament_sponsors {
+  id            Int      @id @default(autoincrement())
+  tournament_id Int
+  logo          String
+  title         String
+  created_at    DateTime    @default(now()) @db.Timestamp(6)
+  tournaments   tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
+}
+
+model tournament_teams {
+  id              Int      @id @default(autoincrement())
+  age_categories  String[]
+  is_selected     Int         @default(2)
+  reject_reason   String?
+  points          Int         @default(0)
+  is_disqualified Boolean     @default(false)
+  pool_name       String?
+  gender_type     String
+  tournament_id   Int
+  team_id         Int
+  created_at      DateTime    @default(now()) @db.Timestamp(6)
+  teams           teams       @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
+  tournaments     tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
+}
+
+model matches {
+  id                               Int               @id @default(autoincrement())
+  tournament_id                    Int
+  team_1_id                        Int
+  team_2_id                        Int
+  quarters                         Int                  @default(4)
+  start_date_time                  DateTime             @db.Timestamp(6)
+  scorekeeper_id                   Int
+  address                          String
+  won_team_id                      Int?
+  status                           Int                  @default(1)
+  cancel_reason                    String?
+  round_name                       String?
+  created_at                       DateTime             @default(now()) @db.Timestamp(6)
+  match_player_fouls               match_player_fouls[]
+  match_quarters                   match_quarters[]
+  scorekeeper                      scorekeeper          @relation(fields: [scorekeeper_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "scorekeeper_table")
+  teams_matches_team_1_idToteams   teams                @relation("matches_team_1_idToteams", fields: [team_1_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_1_table")
+  teams_matches_team_2_idToteams   teams                @relation("matches_team_2_idToteams", fields: [team_2_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_2_table")
+  tournaments                      tournaments          @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
+  teams_matches_won_team_idToteams teams?               @relation("matches_won_team_idToteams", fields: [won_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "won_team")
+}
+
+model scorekeeper {
+  id                Int    @id @default(autoincrement())
+  name              String
+  email             String
+  mobile            String
+  token             String?
+  token_expiry_time DateTime? @db.Timestamp(6)
+  is_token_expired  Boolean?
+  created_at        DateTime  @default(now()) @db.Timestamp(6)
+  matches           matches[]
+}
+
+model match_player_fouls {
+  id          Int   @id @default(autoincrement())
+  match_id    Int
+  player_id   Int
+  total_fouls Int      @default(0)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  matches     matches  @relation(fields: [match_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "maches_table")
+  players     players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
+}
+
+model match_quarters {
+  id                                                              Int        @id @default(autoincrement())
+  match_id                                                        Int
+  team_1_points                                                   Int
+  team_2_points                                                   Int
+  team_1_fouls                                                    Int           @default(0)
+  team_2_fouls                                                    Int           @default(0)
+  quarter_number                                                  Int?
+  won_by_team_id                                                  Int?
+  status                                                          Int           @default(2)
+  timeline_start_score_id                                         Int?
+  timeline_end_score_id                                           Int?
+  created_at                                                      DateTime      @default(now()) @db.Timestamp(6)
+  matches                                                         matches       @relation(fields: [match_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_table")
+  teams                                                           teams?        @relation(fields: [won_by_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
+  match_score_match_quarters_timeline_end_score_idTomatch_score   match_score?  @relation("match_quarters_timeline_end_score_idTomatch_score", fields: [timeline_end_score_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "timeline_end_score_table_id")
+  match_score_match_quarters_timeline_start_score_idTomatch_score match_score?  @relation("match_quarters_timeline_start_score_idTomatch_score", fields: [timeline_start_score_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "timeline_start_score_table_id")
+  match_score_match_score_quarted_idTomatch_quarters              match_score[] @relation("match_score_quarted_idTomatch_quarters")
+}
+
+model match_score {
+  id                                                                 Int           @id @default(autoincrement())
+  team_id                                                            Int
+  points                                                             Int
+  point_status                                                       String
+  quarted_id                                                         Int
+  created_at                                                         DateTime         @default(now()) @db.Timestamp(6)
+  match_quarters_match_quarters_timeline_end_score_idTomatch_score   match_quarters[] @relation("match_quarters_timeline_end_score_idTomatch_score")
+  match_quarters_match_quarters_timeline_start_score_idTomatch_score match_quarters[] @relation("match_quarters_timeline_start_score_idTomatch_score")
+  match_quarters_match_score_quarted_idTomatch_quarters              match_quarters   @relation("match_score_quarted_idTomatch_quarters", fields: [quarted_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_quarter_table")
+  teams                                                              teams            @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
+}
+
+model gallery {
+  id            Int       @id @default(autoincrement())
+  tournament_id Int?
+  photo         String
+  category      String
+  priority      Int          @default(0)
+  created_at    DateTime     @default(now()) @db.Timestamp(6)
+  tournaments   tournaments? @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
+}
+
+model news {
+  id          Int   @id @default(autoincrement())
+  photo       String
+  title       String
+  description String
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+}
+
+
+
+
+
+
+
+
+
+
+
+

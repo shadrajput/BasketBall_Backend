@@ -3,8 +3,8 @@ const {
   httpScoreboardLinkMail
 } = require("./mail.controller");
 
-const mailRouter = express.Router();
+const router = express.Router();
 
-mailRouter.post("/scoreboard-link", httpScoreboardLinkMail);
+router.post("/scoreboard-link", httpScoreboardLinkMail);
 
-module.exports = mailRouter;
+module.exports = router;

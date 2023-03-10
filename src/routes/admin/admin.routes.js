@@ -1,8 +1,6 @@
 const express = require("express");
 // const {} = require("./admin.controller");
 
-const adminRouter = express.Router();
+const router = express.Router();
 
-adminRouter.post("Authenticate",)
-
-module.exports = adminRouter;
+module.exports = router;

@@ -1,23 +1,7 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Players` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `Users` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropForeignKey
-ALTER TABLE "Players" DROP CONSTRAINT "Players_user_id_fkey";
-
--- DropTable
-DROP TABLE "Players";
-
--- DropTable
-DROP TABLE "Users";
-
 -- CreateTable
 CREATE TABLE "gallery" (
-    "id" BIGSERIAL NOT NULL,
-    "tournament_id" BIGINT,
+    "id" SERIAL NOT NULL,
+    "tournament_id" INTEGER,
     "photo" TEXT NOT NULL,
     "category" TEXT NOT NULL,
     "priority" INTEGER NOT NULL DEFAULT 0,
@@ -28,9 +12,9 @@ CREATE TABLE "gallery" (
 
 -- CreateTable
 CREATE TABLE "match_player_fouls" (
-    "id" BIGSERIAL NOT NULL,
-    "match_id" BIGINT NOT NULL,
-    "player_id" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "match_id" INTEGER NOT NULL,
+    "player_id" INTEGER NOT NULL,
     "total_fouls" INTEGER NOT NULL DEFAULT 0,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -39,17 +23,17 @@ CREATE TABLE "match_player_fouls" (
 
 -- CreateTable
 CREATE TABLE "match_quarters" (
-    "id" BIGSERIAL NOT NULL,
-    "match_id" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "match_id" INTEGER NOT NULL,
     "team_1_points" INTEGER NOT NULL,
     "team_2_points" INTEGER NOT NULL,
     "team_1_fouls" INTEGER NOT NULL DEFAULT 0,
     "team_2_fouls" INTEGER NOT NULL DEFAULT 0,
     "quarter_number" INTEGER,
-    "won_by_team_id" BIGINT,
+    "won_by_team_id" INTEGER,
     "status" INTEGER NOT NULL DEFAULT 2,
-    "timeline_start_score_id" BIGINT,
-    "timeline_end_score_id" BIGINT,
+    "timeline_start_score_id" INTEGER,
+    "timeline_end_score_id" INTEGER,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "match_quarters_pkey" PRIMARY KEY ("id")
@@ -57,11 +41,11 @@ CREATE TABLE "match_quarters" (
 
 -- CreateTable
 CREATE TABLE "match_score" (
-    "id" BIGSERIAL NOT NULL,
-    "team_id" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "team_id" INTEGER NOT NULL,
     "points" INTEGER NOT NULL,
     "point_status" TEXT NOT NULL,
-    "quarted_id" BIGINT NOT NULL,
+    "quarted_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "match_score_pkey" PRIMARY KEY ("id")
@@ -69,15 +53,15 @@ CREATE TABLE "match_score" (
 
 -- CreateTable
 CREATE TABLE "matches" (
-    "id" BIGSERIAL NOT NULL,
-    "tournament_id" BIGINT NOT NULL,
-    "team_1_id" BIGINT NOT NULL,
-    "team_2_id" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "tournament_id" INTEGER NOT NULL,
+    "team_1_id" INTEGER NOT NULL,
+    "team_2_id" INTEGER NOT NULL,
     "quarters" INTEGER NOT NULL DEFAULT 4,
     "start_date_time" TIMESTAMP(6) NOT NULL,
-    "scorekeeper_id" BIGINT NOT NULL,
+    "scorekeeper_id" INTEGER NOT NULL,
     "address" TEXT NOT NULL,
-    "won_team_id" BIGINT,
+    "won_team_id" INTEGER,
     "status" INTEGER NOT NULL DEFAULT 1,
     "cancel_reason" TEXT,
     "round_name" TEXT,
@@ -88,7 +72,7 @@ CREATE TABLE "matches" (
 
 -- CreateTable
 CREATE TABLE "news" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "photo" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
@@ -99,12 +83,12 @@ CREATE TABLE "news" (
 
 -- CreateTable
 CREATE TABLE "player_ranking" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "matches_played" INTEGER NOT NULL DEFAULT 0,
     "matches_won" INTEGER NOT NULL DEFAULT 0,
     "matches_lost" INTEGER NOT NULL DEFAULT 0,
     "points" INTEGER NOT NULL DEFAULT 0,
-    "player_id" BIGINT NOT NULL,
+    "player_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Player_ranking_pkey" PRIMARY KEY ("id")
@@ -112,7 +96,7 @@ CREATE TABLE "player_ranking" (
 
 -- CreateTable
 CREATE TABLE "players" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "photo" TEXT NOT NULL,
     "first_name" TEXT NOT NULL,
     "middle_name" TEXT NOT NULL,
@@ -128,7 +112,7 @@ CREATE TABLE "players" (
     "playing_position" TEXT NOT NULL,
     "jersey_no" INTEGER NOT NULL,
     "about" TEXT NOT NULL,
-    "user_id" BIGINT NOT NULL,
+    "user_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Players_pkey" PRIMARY KEY ("id")
@@ -136,7 +120,7 @@ CREATE TABLE "players" (
 
 -- CreateTable
 CREATE TABLE "scorekeeper" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "mobile" TEXT NOT NULL,
@@ -150,9 +134,9 @@ CREATE TABLE "scorekeeper" (
 
 -- CreateTable
 CREATE TABLE "team_players" (
-    "id" BIGSERIAL NOT NULL,
-    "team_id" BIGINT NOT NULL,
-    "player_id" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "team_id" INTEGER NOT NULL,
+    "player_id" INTEGER NOT NULL,
     "is_playing" BOOLEAN NOT NULL,
     "playing_position" TEXT NOT NULL,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -162,7 +146,7 @@ CREATE TABLE "team_players" (
 
 -- CreateTable
 CREATE TABLE "teams" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "logo" TEXT,
     "team_name" TEXT NOT NULL,
     "coach_name" TEXT,
@@ -174,7 +158,7 @@ CREATE TABLE "teams" (
     "matches_won" INTEGER NOT NULL DEFAULT 0,
     "matches_lost" INTEGER NOT NULL DEFAULT 0,
     "is_details_editable" BOOLEAN DEFAULT true,
-    "user_id" BIGINT NOT NULL,
+    "user_id" INTEGER NOT NULL,
     "created_at" TIME(6) DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Teams_pkey" PRIMARY KEY ("id")
@@ -182,10 +166,10 @@ CREATE TABLE "teams" (
 
 -- CreateTable
 CREATE TABLE "tournament_referees" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "mobile" TEXT NOT NULL,
-    "tournament_id" BIGINT NOT NULL,
+    "tournament_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "tournament_referees_pkey" PRIMARY KEY ("id")
@@ -193,8 +177,8 @@ CREATE TABLE "tournament_referees" (
 
 -- CreateTable
 CREATE TABLE "tournament_sponsors" (
-    "id" BIGSERIAL NOT NULL,
-    "tournament_id" BIGINT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "tournament_id" INTEGER NOT NULL,
     "logo" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -204,7 +188,7 @@ CREATE TABLE "tournament_sponsors" (
 
 -- CreateTable
 CREATE TABLE "tournament_teams" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "age_categories" TEXT[],
     "is_selected" INTEGER NOT NULL DEFAULT 2,
     "reject_reason" TEXT,
@@ -212,8 +196,8 @@ CREATE TABLE "tournament_teams" (
     "is_disqualified" BOOLEAN NOT NULL DEFAULT false,
     "pool_name" TEXT,
     "gender_type" TEXT NOT NULL,
-    "tournament_id" BIGINT NOT NULL,
-    "team_id" BIGINT NOT NULL,
+    "tournament_id" INTEGER NOT NULL,
+    "team_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "tournament_teams_pkey" PRIMARY KEY ("id")
@@ -221,7 +205,7 @@ CREATE TABLE "tournament_teams" (
 
 -- CreateTable
 CREATE TABLE "tournaments" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "logo" TEXT,
     "tournament_name" TEXT NOT NULL,
     "address" TEXT NOT NULL,
@@ -235,7 +219,7 @@ CREATE TABLE "tournaments" (
     "prize" TEXT,
     "is_registration_open" BOOLEAN NOT NULL DEFAULT true,
     "is_details_editable" BOOLEAN NOT NULL DEFAULT true,
-    "user_id" BIGINT NOT NULL,
+    "user_id" INTEGER NOT NULL,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "tournaments_pkey" PRIMARY KEY ("id")
@@ -243,7 +227,7 @@ CREATE TABLE "tournaments" (
 
 -- CreateTable
 CREATE TABLE "users" (
-    "id" BIGSERIAL NOT NULL,
+    "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "password" TEXT NOT NULL,
