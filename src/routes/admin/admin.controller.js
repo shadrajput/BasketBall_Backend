@@ -4,6 +4,5 @@ const {
 } = require("../../middlewares/auth");
 
 
-///admin authentication super admin
 
-// module.exports = {};
+module.exports = {};
