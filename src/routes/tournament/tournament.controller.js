@@ -16,7 +16,8 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
                         mode: 'insensitive'
                     }
                 },
-                {
+                { 
+                    //can't create the tournament with the same name until the tournament is upcoming/live
                     status: {
                         in: [1, 2]
                     }
@@ -35,7 +36,7 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
             user_id,
             tournament_name,
             address,
-            start_date: new Date(start_date),
+            start_date: new Date(start_date), //date should be in YYYY-mm-dd format
             end_date: new Date(end_date),
             gender_types,
             age_categories,
@@ -48,6 +49,31 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
 
 })
 
+const updateTournamentDetails = catchAsyncErrors(async(req, res, next) => {
+    const {tournament_id} = req.params
+    
+    const {logo, tournament_name, address, start_date, end_date, gender_types, age_categories, level, prize} = req.body
+
+    await prisma.tournaments.update({
+        where:{
+            id: Number(tournament_id)
+        },
+        data:{
+            tournament_name,
+            address,
+            start_date: new Date(start_date), //date should be in YYYY-mm-dd format
+            end_date: new Date(end_date),
+            gender_types,
+            age_categories,
+            level, 
+            prize
+        }
+    })
+
+    res.status(200).json({success: true, message: "Tournament details updated"})
+})
+
 module.exports ={
-    tournamentRegistration
+    tournamentRegistration,
+    updateTournamentDetails
 }
