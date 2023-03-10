@@ -8,8 +8,25 @@ const prisma = new PrismaClient();
 
 const userSignup = catchAsyncErrors(async(req, res, next) =>{
     const {name, email, password, mobile} = req.body
+
+    //checking mobile number already exist
+    let user = await prisma.users.findFirst({where: {mobile}});
+
+    if(user){
+        return next(new ErrorHandler('User already exists with this mobile number'))
+    }
+
+    //checking email already exist
+    user = null
+    user = await prisma.users.findUnique({where: {email}});
+
+    if(user){
+        return next(new ErrorHandler('User already exists with this email'))
+    }
+
+
     const hashedPassword = await bcrypt.hash(password, 10)
-    const user = await prisma.users.create({
+    await prisma.users.create({
         data:{
             name,
             email,
