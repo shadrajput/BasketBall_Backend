@@ -54,11 +54,44 @@ const userLogin = catchAsyncErrors(async(req, res, next) =>{
 
     const token = generateToken(user.id);
 
-    res.status(200).json({success: true, message: 'Login successfully', token })
+    res.status(200).json({success: true, message: 'Login successfully', token, is_account_verified: user.is_verified })
     
 })
 
+const verifyAccount = catchAsyncErrors(async(req, res, next) => {
+    const {user_id, token} = req.params;
+
+    let user = await prisma.users.findFirst({
+        where: {
+            AND:{
+                id: Number(user_id),
+                token: token
+            }
+        }
+    })
+
+    if(!user){
+        return next(new ErrorHandler('Link is expired', 400));
+    }
+
+    user = null
+    user = await prisma.users.update({ 
+        where:{
+            id: Number(user_id),
+        },
+        data:{
+            is_verified: true,
+            token: null
+        }
+    })
+
+
+    res.status(200).json({success: true, message: 'Account verified successfully'})
+})
+
+
 module.exports = {
     userSignup, 
-    userLogin
+    userLogin,
+    verifyAccount
 }
