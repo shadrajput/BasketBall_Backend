@@ -4,6 +4,7 @@ const imagekitAuthRouter = require("./routes/imagekit/imagekit.routes");
 const mailRouter = require("./routes/mail/mail.route");
 const userRouter = require('./routes/user/user.routes');
 const tournamentRouter = require('./routes/tournament/tournament.routes');
+const playerRouter = require('./routes/player/player.routes');
 const errorMiddleware = require("./middlewares/errors");
 const cors = require("cors");
 const path = require("path");
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/admin", adminRouter);
 app.use('/user', userRouter);
 app.use('/tournament', tournamentRouter);
+app.use('/players', playerRouter);
 app.use("/imagekit", imagekitAuthRouter);
 app.use("/mail", mailRouter);
 
