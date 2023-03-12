@@ -116,6 +116,27 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
 
 
 // ----------------------------------------------------
+// -------------- one_Player_Details ------------------
+// ----------------------------------------------------
+const onePlayerDetails = catchAsyncErrors(async (req, res, next) => {
+
+    const { player_id } = req.params
+
+    const onePlayerDetails = await prisma.players.findFirst({
+        where: {
+            id: Number(player_id)
+        }
+    })
+
+    res.status(200).json({
+        onePlayerDetails: onePlayerDetails,
+        success: true,
+        message: "One Player Details"
+    })
+})
+
+
+// ----------------------------------------------------
 // ------------------ Update_Player -------------------
 // ----------------------------------------------------
 const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
@@ -154,22 +175,23 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 
-    console.log('1')
     const { player_id } = req.params
     await prisma.players.delete({
         where: {
-        id : Number(player_id)
-        }       
+            id: Number(player_id)
+        }
     })
+
     res.status(200).json({ success: true, message: "Player details deleted" })
 })
-    
+
 
 
 
 module.exports = {
     playerRegistration,
     allPlayers,
+    onePlayerDetails,
     updatePlayerDetails,
     deletePlayerDetails
 }
