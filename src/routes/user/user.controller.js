@@ -58,6 +58,49 @@ const userLogin = catchAsyncErrors(async(req, res, next) =>{
     
 })
 
+const googleLogin = catchAsyncErrors(async(req, res, next)=>{
+    const accessToken = req.header.google_access_token
+
+    const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{
+        method: 'GET',
+		headers: {
+			'Authorization': `Bearer ${accessToken}`,
+		},
+    })
+
+    if(response){
+        const firstName = response.data.given_name;
+        const lastName = response.data.family_name;
+        const email = response.data.email;
+        // const photo = response.data.picture
+
+        const existingUser = await prisma.users.findFirst({where:{email}})
+
+        if(!existingUser){
+            const newUser = await prisma.users.create({
+                data:{
+                    name: `${firstName} ${lastName}`,
+                    email,
+                    is_google: true,
+                    is_visitor: true,
+                    is_player: false,
+                    is_organizer: false,
+                    is_manager: false,
+                    is_admin: false,
+                    is_verified: true,
+                }
+            })
+
+            const token = generateToken(newUser.id);
+            return res.status(201).json({success: true, message: 'Signup successfull', token})
+        }
+        else{
+            const token = generateToken(existingUser.id);
+            return res.status(200).json({success: true, message: 'Login successfull', token})
+        }
+    }
+})
+
 const verifyAccount = catchAsyncErrors(async(req, res, next) => {
     const {user_id, token} = req.params;
 
@@ -93,5 +136,6 @@ const verifyAccount = catchAsyncErrors(async(req, res, next) => {
 module.exports = {
     userSignup, 
     userLogin,
+    googleLogin,
     verifyAccount
 }

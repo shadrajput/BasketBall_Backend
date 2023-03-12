@@ -11,10 +11,11 @@ model users {
   id           Int        @id(map: "Users_pkey") @default(autoincrement())
   email        String        @unique(map: "Users_email_key")
   name         String
-  password     String
-  mobile       String        @unique(map: "Users_mobile_key")
+  password     String?
+  mobile       String?       @unique(map: "Users_mobile_key")
   token        String?
   created_at   DateTime      @default(now())
+  is_google    Boolean       @default(false)
   is_visitor   Boolean       @default(true)
   is_player    Boolean       @default(false)
   is_manager   Boolean       @default(false)
