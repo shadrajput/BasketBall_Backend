@@ -34,7 +34,7 @@ model players {
   last_name          String
   alternate_mobile   String
   gender             String
-  height             Int
+  height             Float
   weight             Int
   pincode            Int
   city               String
