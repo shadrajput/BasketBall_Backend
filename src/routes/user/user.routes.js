@@ -5,7 +5,7 @@ const router = express.Router()
 
 router.post('/', userSignup)
 router.post('/login', userLogin)
-router.post('/google-login', googleLogin)
+router.get('/google-login', googleLogin)
 router.get('/verify-account/:user_id/:token', verifyAccount)
 
 module.exports = router

@@ -216,7 +216,22 @@ const updateTournamentDetails = catchAsyncErrors(async(req, res, next) => {
     });
 })
 
+const tournamentDetails = catchAsyncErrors(async(req, res, next) => {
+  const {tournament_id} = req.params.tournament_id;
+
+  const tournamentDetails = await prisma.tournaments.findUnique({
+    where: {id: tournament_id}
+  })
+
+  if(!tournamentDetails){
+    return next(new ErrorHandler('Tournament not found', 404));
+  }
+  
+  res.status(200).json({success: true, tournamentDetails})
+})
+
 module.exports ={
     tournamentRegistration,
-    updateTournamentDetails
+    updateTournamentDetails,
+    tournamentDetails
 }
