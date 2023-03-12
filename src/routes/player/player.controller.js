@@ -26,6 +26,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
         }
 
         let photo = "";
+
         const myPromise = new Promise(async (resolve, reject) => {
             if (files.photo.originalFilename != "" && files.photo.size != 0) {
                 const ext = files.photo.mimetype.split("/")[1].trim();
@@ -66,24 +67,26 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
         myPromise.then(async () => {
 
-            let { user_id, first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about } = fields
+            let { user_id = 1, first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about } = fields
 
+            console.log(fields)
             await prisma.players.create({
                 data: {
-                    user_id: Number(user_id),
+                    user_id: user_id,
+                    photo: photo,
                     first_name,
                     middle_name,
                     last_name,
                     alternate_mobile,
                     gender,
-                    height,
-                    weight,
-                    pincode,
+                    height: Number(height),
+                    weight: Number(weight),
+                    pincode: Number(pincode),
                     city,
                     state,
                     country,
                     playing_position,
-                    jersey_no,
+                    jersey_no: Number(jersey_no),
                     about
                 }
             })
@@ -94,6 +97,23 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
     });
 
 })
+
+
+
+// ----------------------------------------------------
+// -------------------- all_Player --------------------
+// ----------------------------------------------------
+const allPlayers = catchAsyncErrors(async (req, res, next) => {
+
+    const AllPlayer = await prisma.players.findMany()
+
+    res.status(200).json({
+        AllPlayer: AllPlayer,
+        success: true,
+        message: "All Player"
+    })
+})
+
 
 // ----------------------------------------------------
 // ------------------ Update_Player -------------------
@@ -129,9 +149,27 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 })
 
 
+// ----------------------------------------------------
+// ------------------ Delete_Player -------------------
+// ----------------------------------------------------
+const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
+
+    console.log('1')
+    const { player_id } = req.params
+    await prisma.players.delete({
+        where: {
+        id : Number(player_id)
+        }       
+    })
+    res.status(200).json({ success: true, message: "Player details deleted" })
+})
+    
+
 
 
 module.exports = {
     playerRegistration,
-    updatePlayerDetails
+    allPlayers,
+    updatePlayerDetails,
+    deletePlayerDetails
 }
