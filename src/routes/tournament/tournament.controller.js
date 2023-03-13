@@ -22,6 +22,29 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
         return res.status(500).json({ success: false, message: err.message });
       }
 
+      const result = await prisma.tournaments.findFirst({ 
+          where: {
+              AND:[
+                  {
+                      tournament_name :{
+                          equals: fields.tournament_name,
+                          mode: 'insensitive'
+                      }
+                  },
+                  { 
+                      //can't create the tournament with the same name until the tournament is upcoming/live
+                      status: {
+                          in: [1, 2]
+                      }
+                  }
+              ]
+          }
+      })
+
+      if(result){
+          return next(new ErrorHandler('Please change the tournament name'))
+      }
+
       let logo = "";
       const myPromise = new Promise(async(resolve, reject) => {
         if (files.logo.originalFilename != "" && files.logo.size != 0) {
@@ -69,29 +92,6 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
         end_date = new Date(end_date)
         gender_types = JSON.parse(gender_types)
         age_categories = JSON.parse(age_categories)
-
-        const result = await prisma.tournaments.findFirst({ 
-            where: {
-                AND:[
-                    {
-                        tournament_name :{
-                            equals: tournament_name,
-                            mode: 'insensitive'
-                        }
-                    },
-                    { 
-                        //can't create the tournament with the same name until the tournament is upcoming/live
-                        status: {
-                            in: [1, 2]
-                        }
-                    }
-                ]
-            }
-        })
-
-        if(result){
-            return next(new ErrorHandler('Please change the tournament name'))
-        }
 
         await prisma.tournaments.create({
             data:{
@@ -217,7 +217,35 @@ const updateTournamentDetails = catchAsyncErrors(async(req, res, next) => {
     });
 })
 
+const tournamentDetails = catchAsyncErrors(async(req, res, next) => {
+  const {tournament_id} = req.params;
+
+  const tournamentDetails = await prisma.tournaments.findUnique({
+    where: {id: Number(tournament_id)},
+    include: {
+      tournament_sponsors: true,
+      tournament_referees: true,
+      tournament_teams: true,
+      matches: true,
+      gallery: true,
+      users: true
+    },
+  })
+
+  if(!tournamentDetails){
+    return next(new ErrorHandler('Tournament not found', 404));
+  }
+  
+  res.status(200).json({success: true, tournamentDetails})
+})
+
+const closeRegistration = catchAsyncErrors(async() => {
+  const {tournament_id} = req.params;
+})
+
 module.exports ={
     tournamentRegistration,
-    updateTournamentDetails
+    updateTournamentDetails,
+    tournamentDetails,
+    closeRegistration
 }

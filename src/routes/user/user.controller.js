@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt')
 const { PrismaClient } =  require('@prisma/client')
 const { comparePassword, generateToken } = require('../../middlewares/auth');
 const ErrorHandler = require("../../utils/ErrorHandler");
+const axios = require('axios')
 
 const prisma = new PrismaClient();
 
@@ -24,14 +25,13 @@ const userSignup = catchAsyncErrors(async(req, res, next) =>{
         return next(new ErrorHandler('User already exists with this email'))
     }
 
-
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(password.trim(), 10)
     await prisma.users.create({
         data:{
-            name,
-            email,
+            name: name.trim(),
+            email: email.trim(),
             password: hashedPassword,
-            mobile,
+            mobile: mobile.trim(),
             is_visitor: true,
             is_player: false,
             is_organizer: false,
@@ -59,10 +59,9 @@ const userLogin = catchAsyncErrors(async(req, res, next) =>{
 })
 
 const googleLogin = catchAsyncErrors(async(req, res, next)=>{
-    const accessToken = req.header.google_access_token
+    const accessToken = req.headers.authorization
 
-    const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo",{
-        method: 'GET',
+    const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo",{
 		headers: {
 			'Authorization': `Bearer ${accessToken}`,
 		},
