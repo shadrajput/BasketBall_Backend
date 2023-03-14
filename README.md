@@ -1,3 +1,3 @@
-# NSC_API
+# BasketBall Application
 
-API for NSC
+##created by team Wellbenix[www.wellbenix.com]

@@ -238,13 +238,105 @@ const tournamentDetails = catchAsyncErrors(async(req, res, next) => {
   res.status(200).json({success: true, tournamentDetails})
 })
 
-const closeRegistration = catchAsyncErrors(async() => {
+const startRegistration = catchAsyncErrors(async(req, res, next) => {
   const {tournament_id} = req.params;
+
+  await prisma.tournaments.update({
+    where:{
+      id: Number(tournament_id),
+    },
+    data:{
+      is_registration_open: true
+    }
+  })
+
+  res.status(200).json({success: true, message: "Registration started successfully"})
+})
+
+const closeRegistration = catchAsyncErrors(async(req, res, next) => {
+  const {tournament_id} = req.params;
+
+  await prisma.tournaments.update({
+    where:{
+      id: Number(tournament_id),
+    },
+    data:{
+      is_registration_open: false
+    }
+  })
+
+  res.status(200).json({success: true, message: "Registration closed successfully"})
+})
+
+const startTournament = catchAsyncErrors(async(req, res, next)=>{
+  const {tournament_id} = req.params;
+  await prisma.tournaments.update({
+    where:{
+      id: Number(tournament_id),
+    },
+    data: {
+      status: 2, //2 == live
+      is_details_editable: false
+    }
+  })
+
+  res.status(200).json({success: true, message: "Tournament started successfully"})
+})
+
+const endTournament = catchAsyncErrors(async(req, res, next) => {
+  const {tournament_id} = req.params;
+
+  await prisma.tournaments.update({
+    where:{
+      id: Number(tournament_id),
+    },
+    data:{
+      status: 3, //3 == completed
+      is_details_editable: false
+    }
+  })
+
+  res.status(200).json({success: true, message: "Tournament ended successfully"})
+
+})
+
+const disqualifyTeam = catchAsyncErrors(async(req, res, next) => {
+  const {tournament_id, team_id} = req.params;
+
+  const tournament_teams_id = await prisma.tournament_teams.findFirst({
+    where:{
+      AND:[
+        {tournament_id: Number(tournament_id)},
+        {team_id: Number(team_id)}
+      ]
+    }
+  })
+
+  await prisma.tournament_teams.update({
+    where:{
+      id: tournament_teams_id,
+    },
+    data:{
+      status: 3, //3 == completed
+      is_details_editable: false
+    }
+  })
+
+  res.status(200).json({success: true, message: "Team disqualified successfully"})
+})
+
+const uploadGalleryImage = catchAsyncErrors((req, res, next)=>{
+  
 })
 
 module.exports ={
     tournamentRegistration,
     updateTournamentDetails,
     tournamentDetails,
-    closeRegistration
+    startRegistration,
+    closeRegistration,
+    startTournament,
+    endTournament,
+    disqualifyTeam,
+    uploadGalleryImage
 }

@@ -34,6 +34,7 @@ model players {
   middle_name        String
   last_name          String
   alternate_mobile   String
+  date_of_birth      DateTime              @db.Date
   gender             String
   height             Float
   weight             Int
