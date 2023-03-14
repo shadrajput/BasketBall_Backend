@@ -141,4 +141,4 @@ const updateTournamentDetails = catchAsyncErrors(async(req, res, next) => {
 module.exports ={
     tournamentRegistration,
     updateTournamentDetails
-}
+} 
