@@ -47,7 +47,7 @@ model players {
   about              String
   user_id            Int
   created_at         DateTime             @default(now())
-  match_player_fouls match_player_fouls[]
+  match_players      match_players[]
   player_statistics     player_statistics[]
   users              users                @relation(fields: [user_id], references: [id], map: "Players_user_id_fkey")
   team_players       team_players[]
@@ -173,7 +173,7 @@ model matches {
   cancel_reason                    String?
   round_name                       String?
   created_at                       DateTime             @default(now()) @db.Timestamp(6)
-  match_player_fouls               match_player_fouls[]
+  match_players                    match_players[]
   match_quarters                   match_quarters[]
   scorekeeper                      scorekeeper          @relation(fields: [scorekeeper_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "scorekeeper_table")
   teams_matches_team_1_idToteams   teams                @relation("matches_team_1_idToteams", fields: [team_1_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_1_table")
@@ -194,11 +194,13 @@ model scorekeeper {
   matches           matches[]
 }
 
-model match_player_fouls {
+
+model match_players {
   id          Int   @id @default(autoincrement())
   match_id    Int
   player_id   Int
-  total_fouls Int      @default(0)
+  points      Int      @default(0)
+  fouls       Int      @default(0)
   created_at  DateTime @default(now()) @db.Timestamp(6)
   matches     matches  @relation(fields: [match_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "maches_table")
   players     players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
