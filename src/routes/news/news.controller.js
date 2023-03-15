@@ -15,9 +15,9 @@ const imagekit = new ImageKit({
 
 
 // ----------------------------------------------------
-// ------------------ Registration --------------------
+// --------------------- Add --------------------------
 // ----------------------------------------------------
-const playerRegistration = catchAsyncErrors(async (req, res, next) => {
+const addnews = catchAsyncErrors(async (req, res, next) => {
 
     const form = new formidable.IncomingForm();
     form.parse(req, async function (err, fields, files) {
@@ -67,30 +67,17 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
         myPromise.then(async () => {
 
-            let { user_id = 1, first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about, date_of_birth } = fields
-            await prisma.players.create({
+            let { title, description, created_at } = fields
+            await prisma.news.create({
                 data: {
-                    user_id: user_id,
                     photo: photo,
-                    first_name,
-                    middle_name,
-                    last_name,
-                    alternate_mobile,
-                    gender,
-                    height: Number(height),
-                    weight: Number(weight),
-                    pincode: Number(pincode),
-                    city,
-                    state,
-                    country,
-                    playing_position,
-                    jersey_no: Number(jersey_no),
-                    about,
-                    date_of_birth: date_of_birth
+                    title: title,
+                    description: description,
+                    created_at: created_at
                 }
             })
 
-            res.status(201).json({ success: true, message: "Registration successfull." })
+            res.status(201).json({ success: true, message: "News added successfull." })
         })
 
     });
@@ -100,109 +87,91 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
 
 // ----------------------------------------------------
-// -------------------- all_Player --------------------
+// -------------------- all_news --------------------
 // ----------------------------------------------------
-const allPlayers = catchAsyncErrors(async (req, res, next) => {
+const allNews = catchAsyncErrors(async (req, res, next) => {
 
-    const AllPlayer = await prisma.players.findMany()
+    const AllNews = await prisma.news.findMany()
 
     res.status(200).json({
-        AllPlayer: AllPlayer,
+        AllNews: AllNews,
         success: true,
-        message: "All Player"
+        message: "All News"
     })
 })
 
 
 // ----------------------------------------------------
-// -------------- one_Player_Details ------------------
+// -------------- one_News_Details ------------------
 // ----------------------------------------------------
-const onePlayerDetails = catchAsyncErrors(async (req, res, next) => {
+const oneNewsDetails = catchAsyncErrors(async (req, res, next) => {
 
-    const { player_id } = req.params
+    const { id } = req.params
 
-    const onePlayerDetails = await prisma.players.findFirst({
+    const oneNewsDetails = await prisma.news.findFirst({
         where: {
-            id: Number(player_id)
-        },
-        include: {
-            player_statistics: true,
-            users: true
-        },
+            id: Number(id)
+        }
     })
-
     res.status(200).json({
-        onePlayerDetails: onePlayerDetails,
+        oneNewsDetails: oneNewsDetails,
         success: true,
-        message: "One Player Details"
+        message: "One News Details"
     })
 })
 
 
 // ----------------------------------------------------
-// ------------------ Update_Player -------------------
+// ------------------ Update_News -------------------
 // ----------------------------------------------------
-const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
-    const { player_id } = req.params
+const updateNewsDetails = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params
 
-    const { first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about } = req.body
+    const { title, description, created_at } = req.body
 
-    const updatePlayerDetails = await prisma.players.update({
+ const updateNewsDetails = await prisma.news.update({
         where: {
-            id: Number(player_id)
+            id: Number(id)
         },
         data: {
-            first_name,
-            middle_name,
-            last_name,
-            alternate_mobile,
-            gender,
-            height,
-            weight,
-            pincode,
-            city,
-            state,
-            country,
-            playing_position,
-            jersey_no,
-            about
+            title: title,
+            description: description,
+            created_at: created_at
         }
     })
 
-    res.status(200).json({
-        updatePlayerDetails: updatePlayerDetails,
-        success: true,
-        message: "Player details updated"
-    })
+    res.status(200).json({ 
+        updateNewsDetails : updateNewsDetails,
+        success: true, 
+        message: "News details updated" })
 })
 
 
 // ----------------------------------------------------
-// ------------------ Delete_Player -------------------
+// ------------------ Delete_News -------------------
 // ----------------------------------------------------
-const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
+const deleteNewsDetails = catchAsyncErrors(async (req, res, next) => {
 
-    const { player_id } = req.params
-    const deletePlayerDetails = await prisma.players.delete({
+    const { id } = req.params
+ const deleteNewsDetails = await prisma.news.delete({
         where: {
-            id: Number(player_id)
+            id: Number(id)
         }
     })
 
-    res.status(200).json({
-        deletePlayerDetails: deletePlayerDetails,
-        success: true,
-        message: "Player details deleted"
-    })
+    res.status(200).json({ 
+        deleteNewsDetails : deleteNewsDetails ,
+        success: true, 
+        message: "News details deleted" })
 })
 
 
 
 
 module.exports = {
-    playerRegistration,
-    allPlayers,
-    onePlayerDetails,
-    updatePlayerDetails,
-    deletePlayerDetails
+    addnews,
+    allNews,
+    oneNewsDetails,
+    updateNewsDetails,
+    deleteNewsDetails
 }

@@ -86,7 +86,7 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
 
       myPromise.then(async ()=> {
 
-        let {user_id, tournament_name, address, start_date, end_date, gender_types, age_categories, level, prize} = fields
+        let {user_id = 1, tournament_name, address, start_date, end_date, gender_types, age_categories, level, prize} = fields
 
         start_date = new Date(start_date)
         end_date = new Date(end_date)
