@@ -122,14 +122,14 @@ const oneNewsDetails = catchAsyncErrors(async (req, res, next) => {
 
 
 // ----------------------------------------------------
-// ------------------ Update_Player -------------------
+// ------------------ Update_News -------------------
 // ----------------------------------------------------
 const updateNewsDetails = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params
 
     const { title, description, created_at } = req.body
 
-    await prisma.news.update({
+ const updateNewsDetails = await prisma.news.update({
         where: {
             id: Number(id)
         },
@@ -140,23 +140,29 @@ const updateNewsDetails = catchAsyncErrors(async (req, res, next) => {
         }
     })
 
-    res.status(200).json({ success: true, message: "News details updated" })
+    res.status(200).json({ 
+        updateNewsDetails : updateNewsDetails,
+        success: true, 
+        message: "News details updated" })
 })
 
 
 // ----------------------------------------------------
-// ------------------ Delete_Player -------------------
+// ------------------ Delete_News -------------------
 // ----------------------------------------------------
 const deleteNewsDetails = catchAsyncErrors(async (req, res, next) => {
 
     const { id } = req.params
-    await prisma.news.delete({
+ const deleteNewsDetails = await prisma.news.delete({
         where: {
             id: Number(id)
         }
     })
 
-    res.status(200).json({ success: true, message: "News details deleted" })
+    res.status(200).json({ 
+        deleteNewsDetails : deleteNewsDetails ,
+        success: true, 
+        message: "News details deleted" })
 })
 
 

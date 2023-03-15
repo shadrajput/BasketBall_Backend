@@ -6,6 +6,7 @@ const userRouter = require('./routes/user/user.routes');
 const tournamentRouter = require('./routes/tournament/tournament.routes');
 const playerRouter = require('./routes/player/player.routes');
 const newsRouter = require("./routes/news/news.routes")
+const galleryRouter = require("./routes/gallery/gallery.routes")
 const errorMiddleware = require("./middlewares/errors");
 const cors = require("cors");
 const path = require("path");
@@ -21,6 +22,7 @@ app.use('/user', userRouter);
 app.use('/tournament', tournamentRouter);
 app.use('/players', playerRouter);
 app.use('/news', newsRouter);
+app.use('/gallery', galleryRouter);
 app.use("/imagekit", imagekitAuthRouter);
 app.use("/mail", mailRouter);
 

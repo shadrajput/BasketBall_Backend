@@ -15,9 +15,9 @@ const imagekit = new ImageKit({
 
 
 // ----------------------------------------------------
-// ------------------ Registration --------------------
+// --------------------- Add --------------------------
 // ----------------------------------------------------
-const playerRegistration = catchAsyncErrors(async (req, res, next) => {
+const addgallery = catchAsyncErrors(async (req, res, next) => {
 
     const form = new formidable.IncomingForm();
     form.parse(req, async function (err, fields, files) {
@@ -67,30 +67,18 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
         myPromise.then(async () => {
 
-            let { user_id = 1, first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about ,date_of_birth } = fields
-            await prisma.players.create({
+            let { tournament_id, category, priority, created_at } = fields
+            await prisma.gallery.create({
                 data: {
-                    user_id: user_id,
+                    tournament_id: tournament_id,
                     photo: photo,
-                    first_name,
-                    middle_name,
-                    last_name,
-                    alternate_mobile,
-                    gender,
-                    height: Number(height),
-                    weight: Number(weight),
-                    pincode: Number(pincode),
-                    city,
-                    state,
-                    country,
-                    playing_position,
-                    jersey_no: Number(jersey_no),
-                    about,
-                    date_of_birth : date_of_birth
+                    category: category,
+                    priority: priority,
+                    created_at: created_at
                 }
             })
 
-            res.status(201).json({ success: true, message: "Registration successfull." })
+            res.status(201).json({ success: true, message: "Gallery added successfull." })
         })
 
     });
@@ -100,103 +88,89 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
 
 // ----------------------------------------------------
-// -------------------- all_Player --------------------
+// -------------------- all_gallery --------------------
 // ----------------------------------------------------
-const allPlayers = catchAsyncErrors(async (req, res, next) => {
+const allGellery = catchAsyncErrors(async (req, res, next) => {
 
-    const AllPlayer = await prisma.players.findMany()
+    const allGellery = await prisma.gallery.findMany()
 
     res.status(200).json({
-        AllPlayer: AllPlayer,
+        AllNews: allGellery,
         success: true,
-        message: "All Player"
+        message: "All Gallery"
     })
 })
 
 
 // ----------------------------------------------------
-// -------------- one_Player_Details ------------------
+// -------------- one_News_Details ------------------
 // ----------------------------------------------------
-const onePlayerDetails = catchAsyncErrors(async (req, res, next) => {
+const oneGalleryDetails = catchAsyncErrors(async (req, res, next) => {
 
-    const { player_id } = req.params
+    const { id } = req.params
 
-    const onePlayerDetails = await prisma.players.findFirst({
+    const oneGalleryDetails = await prisma.gallery.findFirst({
         where: {
-            id: Number(player_id)
+            id: Number(id)
         }
     })
-
     res.status(200).json({
-        onePlayerDetails: onePlayerDetails,
+        oneGalleryDetails: oneGalleryDetails,
         success: true,
-        message: "One Player Details"
+        message: "One News Details"
     })
 })
 
 
 // ----------------------------------------------------
-// ------------------ Update_Player -------------------
+// ------------------ Update_Gallery -------------------
 // ----------------------------------------------------
-const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
-    const { player_id } = req.params
+const updateGalleryDetails = catchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params
 
-    const { first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about } = req.body
+    let { category, priority, created_at } = req.body
 
-  const updatePlayerDetails = await prisma.players.update({
+    const updateGalleryDetails = await prisma.gallery.update({
         where: {
-            id: Number(player_id)
+            id: Number(id)
         },
         data: {
-            first_name,
-            middle_name,
-            last_name,
-            alternate_mobile,
-            gender,
-            height,
-            weight,
-            pincode,
-            city,
-            state,
-            country,
-            playing_position,
-            jersey_no,
-            about
+            category: category,
+            priority: priority,
+            created_at: created_at
         }
     })
 
-    res.status(200).json({ 
-        updatePlayerDetails : updatePlayerDetails,
-        success: true, 
-        message: "Player details updated" })
+    res.status(200).json({ updateGalleryDetails: updateGalleryDetails, success: true, message: "Gallery details updated" })
 })
 
 
 // ----------------------------------------------------
-// ------------------ Delete_Player -------------------
+// ------------------ Delete_Gallery -------------------
 // ----------------------------------------------------
-const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
+const deleteGalleryDetails = catchAsyncErrors(async (req, res, next) => {
 
-    const { player_id } = req.params
- const deletePlayerDetails = await prisma.players.delete({
+    const { id } = req.params
+  const deleteGalleryDetails =  await prisma.gallery.delete({
         where: {
-            id: Number(player_id)
+            id: Number(id)
         }
     })
 
-    res.status(200).json({ 
-        deletePlayerDetails : deletePlayerDetails,
-        success: true, 
-        message: "Player details deleted" })
+    res.status(200).json({
+        deleteGalleryDetails : deleteGalleryDetails ,
+         success: true,
+        message: "News details deleted"
+    })
 })
 
 
 
 
 module.exports = {
-    playerRegistration,
-    allPlayers,
-    onePlayerDetails,
-    updatePlayerDetails,
-    deletePlayerDetails
+    addgallery,
+    allGellery,
+    oneGalleryDetails,
+    updateGalleryDetails,
+    deleteGalleryDetails
 }
