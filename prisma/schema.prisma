@@ -48,13 +48,13 @@ model players {
   user_id            Int
   created_at         DateTime             @default(now())
   match_player_fouls match_player_fouls[]
-  player_ranking     player_ranking[]
+  player_statistics     player_statistics[]
   users              users                @relation(fields: [user_id], references: [id], map: "Players_user_id_fkey")
   team_players       team_players[]
 }
 
-model player_ranking {
-  id             Int   @id(map: "Player_ranking_pkey") @default(autoincrement())
+model player_statistics {
+  id             Int   @id(map: "Player_statistics_pkey") @default(autoincrement())
   matches_played Int      @default(0)
   matches_won    Int      @default(0)
   matches_lost   Int      @default(0)
