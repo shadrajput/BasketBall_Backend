@@ -67,7 +67,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
         myPromise.then(async () => {
 
-            let { user_id = 1, first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about ,date_of_birth } = fields
+            let { user_id = 1, first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about, date_of_birth } = fields
             await prisma.players.create({
                 data: {
                     user_id: user_id,
@@ -86,7 +86,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
                     playing_position,
                     jersey_no: Number(jersey_no),
                     about,
-                    date_of_birth : date_of_birth
+                    date_of_birth: date_of_birth
                 }
             })
 
@@ -124,7 +124,11 @@ const onePlayerDetails = catchAsyncErrors(async (req, res, next) => {
     const onePlayerDetails = await prisma.players.findFirst({
         where: {
             id: Number(player_id)
-        }
+        },
+        include: {
+            player_statistics: true,
+            users: true
+        },
     })
 
     res.status(200).json({
@@ -143,7 +147,7 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 
     const { first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about } = req.body
 
-  const updatePlayerDetails = await prisma.players.update({
+    const updatePlayerDetails = await prisma.players.update({
         where: {
             id: Number(player_id)
         },
@@ -165,10 +169,11 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
         }
     })
 
-    res.status(200).json({ 
-        updatePlayerDetails : updatePlayerDetails,
-        success: true, 
-        message: "Player details updated" })
+    res.status(200).json({
+        updatePlayerDetails: updatePlayerDetails,
+        success: true,
+        message: "Player details updated"
+    })
 })
 
 
@@ -178,16 +183,17 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 
     const { player_id } = req.params
- const deletePlayerDetails = await prisma.players.delete({
+    const deletePlayerDetails = await prisma.players.delete({
         where: {
             id: Number(player_id)
         }
     })
 
-    res.status(200).json({ 
-        deletePlayerDetails : deletePlayerDetails,
-        success: true, 
-        message: "Player details deleted" })
+    res.status(200).json({
+        deletePlayerDetails: deletePlayerDetails,
+        success: true,
+        message: "Player details deleted"
+    })
 })
 
 
