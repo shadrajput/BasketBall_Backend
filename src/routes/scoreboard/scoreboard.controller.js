@@ -22,9 +22,15 @@ const startMatch = catchAsyncErrors(async(req, res, next)=>{
         }
     })
 
+    const last_score_detail = await prisma.match_score.findFirst({
+        orderBy:{
+            created_at: 'desc'
+        }
+    })
     await prisma.match_quarters.create({
         match_id,
         quarter_number: 1,
+        timeline_start_score_id: last_score_detail.id
     })
 
     res.status(200).json({success: true, message: 'Match has been started'});
@@ -212,11 +218,36 @@ const teamFoul = catchAsyncErrors( async (req, res, next)=>{
 })
 
 const playerFoul = catchAsyncErrors( async (req, res, next)=>{
+    const match_id = Number(req.params.match_id)
+    const player_id = Number(req.params.player_id)
+
+    const match_player_details = await prisma.match_players.findFirst({
+        where:{
+            match_id,
+            player_id
+        },
+        include:{
+            player_id: true
+        }
+    })
+
+    await prisma.match_players.update({
+        where:{
+            id: match_player_details.id
+        },
+        data:{
+            fouls:{
+                increament: 1
+            }
+        }
+    })
+
+    res.status(200).json({success: true, message: `Foul added to ${match_player_details.player_id.first_name}`});
 
 })
 
 const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
-
+    
 })
 
 const endMatch = catchAsyncErrors( async (req, res, next)=>{
