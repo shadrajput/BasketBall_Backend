@@ -247,7 +247,58 @@ const playerFoul = catchAsyncErrors( async (req, res, next)=>{
 })
 
 const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
+    const match_id = Number(req.params.match_id);
+
+    const all_quarters = await prisma.match_quarters.findMany({ 
+        where: { match_id },
+        orderBy:{
+            created_at: 'desc'
+        }
+    })
     
+    if(all_quarters.length == 5){
+        return next(new ErrorHandler("This game can't have more than 5 quarters"))
+    }
+
+    //updating current quarter details
+    const match_details = await prisma.matches.findUnique({ where: { id: match_id } });
+    const current_quarter = all_quarters[0];
+    let quarter_won_by = null
+
+    if(current_quarter.team_1_points > current_quarter.team_1_points){
+        quarter_won_by = match_details.team_1_id
+    }
+    else{
+        quarter_won_by = match_details.team_2_id
+    }
+
+    //Getting last score id from match_score table
+    const last_score_detail = await prisma.match_score.findFirst({
+        orderBy: {
+            created_at: 'desc'
+        }
+    })
+
+    //Updating current quarter
+    await prisma.match_quarters.update({
+        where: {
+            id: current_quarter.id
+        },
+        data:{
+            won_by_team_id: quarter_won_by,
+            status: 1,
+            timeline_end_score_id: last_score_detail.id
+        }
+    })
+
+
+    //Creating new quarter
+    await prisma.match_quarters.create({
+        match_id,
+        quarter_number: all_quarters.length,
+        timeline_start_score_id: last_score_detail.id
+    })
+
 })
 
 const endMatch = catchAsyncErrors( async (req, res, next)=>{
