@@ -209,8 +209,8 @@ model match_players {
 model match_quarters {
   id                                                              Int        @id @default(autoincrement())
   match_id                                                        Int
-  team_1_points                                                   Int
-  team_2_points                                                   Int
+  team_1_points                                                   Int           @default(0)
+  team_2_points                                                   Int           @default(0)
   team_1_fouls                                                    Int           @default(0)
   team_2_fouls                                                    Int           @default(0)
   quarter_number                                                  Int?
