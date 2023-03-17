@@ -30,7 +30,8 @@ const startMatch = catchAsyncErrors(async(req, res, next)=>{
     await prisma.match_quarters.create({
         match_id,
         quarter_number: 1,
-        timeline_start_score_id: last_score_detail.id
+        timeline_start_score_id: last_score_detail.id,
+        timeline_end_score_id: last_score_detail.id
     })
 
     res.status(200).json({success: true, message: 'Match has been started'});
@@ -55,11 +56,7 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
     }
 
     const quarter_details = await prisma.match_quarters.findFirst({ 
-        where:{ match_id },
-        orderBy: {
-            created_at: 'desc',
-        },
- 
+        where:{ match_id, status: 2 },
     })
 
     let pointScoreByTeam = '';
@@ -127,19 +124,7 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
     //Adding player points in player table according to the tournament level (international, national, state, local, friendly)
     const tournament_details = await prisma.tournaments.findUnique({ where: { id: match_details.tournament_id } });
 
-    let player_points = 0
-    if(tournament_details.level == 'international'){
-        player_points = 10
-    }
-    else if(tournament_details.level == 'national'){
-        player_points = 5
-    }
-    else if(tournament_details.level == 'state'){
-        player_points = 3
-    }
-    else if(tournament_details.level == 'local'){
-        player_points = 1
-    }
+    const player_points =  getPlayerRankingPoints(tournament_details.level);
 
     await prisma.player_statistics.update({
         where: {
@@ -153,18 +138,25 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
     })
 
     //Adding new entry in match_score table
-    await prisma.match_score.create({
+    const match_score_details = await prisma.match_score.create({
         team_id,
+        player_id,
         points,
         point_status: point_type,
         quarter_id: quarter_details.id
     })
 
-    res.status(200).json({success: true, message: `${points} points added to ${pointScoreByTeam}`});
-})
+    //updating timeline_end_id in match_quarters table
+    await prisma.match_quarters.update({
+        where:{
+            id: quarter_details.id
+        },
+        data:{
+            timeline_end_score_id: match_score_details.id
+        }
+    })
 
-const undoScore = catchAsyncErrors( async (req, res, next)=>{
-    
+    res.status(200).json({success: true, message: `${points} points added to ${pointScoreByTeam}`});
 })
 
 const teamFoul = catchAsyncErrors( async (req, res, next)=>{
@@ -181,10 +173,7 @@ const teamFoul = catchAsyncErrors( async (req, res, next)=>{
     });
 
     const match_quarter_details = await prisma.match_quarters.findFirst({ 
-        where: { match_id },
-        orderBy: {
-            created_at: 'desc'
-        }
+        where: { match_id, status: 2 },
     })
 
     if(match_details.team_1_id == team_id){ //If team 1 foul
@@ -265,15 +254,21 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
     const current_quarter = all_quarters[0];
     let quarter_won_by = null
 
-    if(current_quarter.team_1_points > current_quarter.team_1_points){
+    if(current_quarter.team_1_points > current_quarter.team_2_points){
         quarter_won_by = match_details.team_1_id
     }
-    else{
+    else if(current_quarter.team_2_points > current_quarter.team_1_points){
         quarter_won_by = match_details.team_2_id
     }
 
     //Getting last score id from match_score table
     const last_score_detail = await prisma.match_score.findFirst({
+        where:{
+            id:{
+                gte: current_quarter.timeline_start_score_id,
+                lte: current_quarter.timeline_end_score_id
+            }
+        },
         orderBy: {
             created_at: 'desc'
         }
@@ -287,6 +282,7 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
         data:{
             won_by_team_id: quarter_won_by,
             status: 1,
+            is_undo_score: 0,
             timeline_end_score_id: last_score_detail.id
         }
     })
@@ -295,15 +291,156 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
     //Creating new quarter
     await prisma.match_quarters.create({
         match_id,
+        is_undo_score: 1,
         quarter_number: all_quarters.length,
-        timeline_start_score_id: last_score_detail.id
+        timeline_start_score_id: last_score_detail.id,
+        timeline_end_score_id: last_score_detail.id
     })
 
 })
 
-const endMatch = catchAsyncErrors( async (req, res, next)=>{
+const undoScore = catchAsyncErrors( async (req, res, next)=>{
+    const match_id = Number(req.params.match_id);
+    
+    //Undoing other than last point
+    let current_quarter = await prisma.match_quarters.findFirst({ 
+        where: { match_id, status: 2 }
+    })
 
+
+    //To undo score of previous quarter
+    if(current_quarter.team_1_points == 0 && current_quarter.team_2_points == 0){ // quarter has just started   
+        await prisma.match_quarters.delete({
+            where:{
+               is: current_quarter.id 
+            }
+        })
+
+        current_quarter = await prisma.match_quarters.findMany({ 
+            where: { match_id},
+            orderBy:{
+                created_at: 'desc'
+            }
+        })
+
+        await prisma.match_quarters.update({
+            where:{
+                id: current_quarter.id
+            },
+            data:{
+                won_by_team_id: null,
+                status: 2
+            }
+        })
+    }
+
+    const match_score_details = await prisma.match_score.findFirst({
+        where: { 
+            quarter_id: current_quarter.id,
+            id:{
+                gte: current_quarter.timeline_start_score_id,
+                lte: current_quarter.timeline_end_score_id
+            }
+        },
+        orderBy:{
+            created_at: 'desc'
+        }
+    })
+
+    await prisma.match_score.delete({
+        where:{
+            id: match_score_details.id,
+        }
+    })
+
+    //decreasing the team point in match_quarters table
+
+        //getting match details
+    const match_details = await prisma.matches.findUnique({ where: { id: match_id } });
+    if(match_score_details.team_id == match_details.team_1_id){
+        await prisma.match_quarters.update({
+            where:{
+                id: current_quarter.id
+            },
+            data:{
+                team_1_points:{
+                    increament: -match_score_details.points
+                }
+            }
+        })
+    }
+    else{
+        await prisma.match_quarters.update({
+            where:{
+                id: current_quarter.id
+            },
+            data:{
+                team_2_points:{
+                    increament: -match_score_details.points
+                }
+            }
+        })
+    }
+
+    //decreasing the player point from match_players table
+
+            //getting tournament details
+    const tournament_details = await prisma.tournaments.findUnique({ where: { id: match_details.tournament_id } })
+    
+    //finding match_player id
+    const match_player_details = await prisma.match_players.findFirst({ 
+        where:{
+            match_id,
+            player_id: match_score_details.player_id
+        }
+    })
+
+    await prisma.match_players.update({
+        where:{
+            id: match_player_details.id
+        },
+        data:{
+            points:{
+                increament: match_score_details.points
+            }
+        }
+    })
+    
+    
+    //decreasing the player point from player_statistics table
+    const player_points = getPlayerRankingPoints(tournament_details.level)
+
+    await prisma.player_statistics.update({
+        where:{
+            player_id: match_score_details.player_id
+        },
+        data:{
+            points:{
+                increament: -player_points
+            }
+        }
+    })
+        
 })
+
+const endMatch = catchAsyncErrors( async (req, res, next)=>{
+})
+
+//Helper function to find player points according to tournament level
+function getPlayerRankingPoints(tournament_level){
+    if(tournament_level == 'international'){
+        return 10
+    }
+    else if(tournament_level == 'national'){
+        return 5
+    }
+    else if(tournament_level == 'state'){
+        return 3
+    }
+    else if(tournament_level == 'local'){
+        return 1
+    }
+}
 
 
 module.exports = {

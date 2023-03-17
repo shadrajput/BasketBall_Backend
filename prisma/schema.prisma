@@ -48,6 +48,7 @@ model players {
   user_id            Int
   created_at         DateTime             @default(now())
   match_players      match_players[]
+  match_score        match_score[]
   player_statistics     player_statistics[]
   users              users                @relation(fields: [user_id], references: [id], map: "Players_user_id_fkey")
   team_players       team_players[]
@@ -216,6 +217,7 @@ model match_quarters {
   quarter_number                                                  Int?
   won_by_team_id                                                  Int?
   status                                                          Int           @default(2)
+  is_undo_score                                                   Boolean       @default(0)
   timeline_start_score_id                                         Int?
   timeline_end_score_id                                           Int?
   created_at                                                      DateTime      @default(now()) @db.Timestamp(6)
@@ -229,6 +231,8 @@ model match_quarters {
 model match_score {
   id                                                                 Int           @id @default(autoincrement())
   team_id                                                            Int
+  player_id                                                          Int
+  players     players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
   points                                                             Int
   point_status                                                       String
   quarted_id                                                         Int
