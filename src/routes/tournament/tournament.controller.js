@@ -47,7 +47,7 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
               overwriteFile: true,
               folder: '/tournament_images'
             }, function(error, result) {
-              if(error) {
+              if(error) {           
                 return next(new ErrorHandler(error.message, 500));
               }
               logo = result.url
