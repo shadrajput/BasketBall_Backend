@@ -4,6 +4,23 @@ const ErrorHandler = require("../../utils/ErrorHandler");
 
 const prisma = new PrismaClient();
 
+//********Helper function to find player points according to tournament level*********
+function getPlayerRankingPoints(tournament_level){
+    if(tournament_level == 'international'){
+        return 10
+    }
+    else if(tournament_level == 'national'){
+        return 5
+    }
+    else if(tournament_level == 'state'){
+        return 3
+    }
+    else if(tournament_level == 'local'){
+        return 1
+    }
+}
+//***************************************************************
+
 const startMatch = catchAsyncErrors(async(req, res, next)=>{
     const match_id = Number(req.params.match_id);
 
@@ -282,7 +299,7 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
         data:{
             won_by_team_id: quarter_won_by,
             status: 1,
-            is_undo_score: 0,
+            is_undo_score: false,
             timeline_end_score_id: last_score_detail.id
         }
     })
@@ -291,7 +308,7 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
     //Creating new quarter
     await prisma.match_quarters.create({
         match_id,
-        is_undo_score: 1,
+        is_undo_score: true,
         quarter_number: all_quarters.length,
         timeline_start_score_id: last_score_detail.id,
         timeline_end_score_id: last_score_detail.id
@@ -302,11 +319,14 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
 const undoScore = catchAsyncErrors( async (req, res, next)=>{
     const match_id = Number(req.params.match_id);
     
-    //Undoing other than last point
     let current_quarter = await prisma.match_quarters.findFirst({ 
         where: { match_id, status: 2 }
     })
 
+    //checking if continuous two undo
+    if(current_quarter.is_undo_score == false){
+        return next(new ErrorHandler("Can't undo score continuously two times"))
+    }
 
     //To undo score of previous quarter
     if(current_quarter.team_1_points == 0 && current_quarter.team_2_points == 0){ // quarter has just started   
@@ -317,7 +337,7 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
         })
 
         current_quarter = await prisma.match_quarters.findMany({ 
-            where: { match_id},
+            where: { match_id },
             orderBy:{
                 created_at: 'desc'
             }
@@ -353,6 +373,17 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
         }
     })
 
+
+    //************************************
+    //updating timeline end in match_quarters talbe
+    // await prisma.match_quarters.update({
+    //     where: {
+
+    //     }
+    // })
+    //************************************
+
+
     //decreasing the team point in match_quarters table
 
         //getting match details
@@ -360,7 +391,7 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
     if(match_score_details.team_id == match_details.team_1_id){
         await prisma.match_quarters.update({
             where:{
-                id: current_quarter.id
+                id: match_score_details.id
             },
             data:{
                 team_1_points:{
@@ -372,7 +403,7 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
     else{
         await prisma.match_quarters.update({
             where:{
-                id: current_quarter.id
+                id: match_score_details.id
             },
             data:{
                 team_2_points:{
@@ -401,7 +432,7 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
         },
         data:{
             points:{
-                increament: match_score_details.points
+                increament: -match_score_details.points
             }
         }
     })
@@ -424,24 +455,21 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
 })
 
 const endMatch = catchAsyncErrors( async (req, res, next)=>{
+
+    //Setting winner of the quarter and updating status of the quarter
+
+    //Setting the winner of the match & update status of the match
+
+    //Update matches played, won, lost in team table
+
+    //Update matches played, won, lost in player_statistics table 
+
+    //Update is_details editable and status in tournament table
+
+    //Update is_details editable in team table
+
+    //update is_token_expired in scorekeeper table
 })
-
-//Helper function to find player points according to tournament level
-function getPlayerRankingPoints(tournament_level){
-    if(tournament_level == 'international'){
-        return 10
-    }
-    else if(tournament_level == 'national'){
-        return 5
-    }
-    else if(tournament_level == 'state'){
-        return 3
-    }
-    else if(tournament_level == 'local'){
-        return 1
-    }
-}
-
 
 module.exports = {
     startMatch,

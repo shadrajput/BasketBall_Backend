@@ -217,7 +217,7 @@ model match_quarters {
   quarter_number                                                  Int?
   won_by_team_id                                                  Int?
   status                                                          Int           @default(2)
-  is_undo_score                                                   Boolean       @default(0)
+  is_undo_score                                                   Boolean       @default(false)
   timeline_start_score_id                                         Int?
   timeline_end_score_id                                           Int?
   created_at                                                      DateTime      @default(now()) @db.Timestamp(6)
@@ -225,7 +225,7 @@ model match_quarters {
   teams                                                           teams?        @relation(fields: [won_by_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
   match_score_match_quarters_timeline_end_score_idTomatch_score   match_score?  @relation("match_quarters_timeline_end_score_idTomatch_score", fields: [timeline_end_score_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "timeline_end_score_table_id")
   match_score_match_quarters_timeline_start_score_idTomatch_score match_score?  @relation("match_quarters_timeline_start_score_idTomatch_score", fields: [timeline_start_score_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "timeline_start_score_table_id")
-  match_score_match_score_quarted_idTomatch_quarters              match_score[] @relation("match_score_quarted_idTomatch_quarters")
+  match_score_match_score_quarter_idTomatch_quarters              match_score[] @relation("match_score_quarter_idTomatch_quarters")
 }
 
 model match_score {
@@ -235,11 +235,11 @@ model match_score {
   players     players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
   points                                                             Int
   point_status                                                       String
-  quarted_id                                                         Int
+  quarter_id                                                         Int
   created_at                                                         DateTime         @default(now()) @db.Timestamp(6)
   match_quarters_match_quarters_timeline_end_score_idTomatch_score   match_quarters[] @relation("match_quarters_timeline_end_score_idTomatch_score")
   match_quarters_match_quarters_timeline_start_score_idTomatch_score match_quarters[] @relation("match_quarters_timeline_start_score_idTomatch_score")
-  match_quarters_match_score_quarted_idTomatch_quarters              match_quarters   @relation("match_score_quarted_idTomatch_quarters", fields: [quarted_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_quarter_table")
+  match_quarters_match_score_quarter_idTomatch_quarters              match_quarters   @relation("match_score_quarter_idTomatch_quarters", fields: [quarter_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_quarter_table")
   teams                                                              teams            @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
 }
 
