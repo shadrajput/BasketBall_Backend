@@ -44,7 +44,7 @@ const addgallery = catchAsyncErrors(async (req, res, next) => {
 
                 fs.readFile(oldPath, function (err, data) {
                     if (err) {
-                        return next(new ErrorHandler(error.message, 500));
+                        return next(new ErrorHandler(err.message, 500));
                     }
                     imagekit.upload({
                         file: data,

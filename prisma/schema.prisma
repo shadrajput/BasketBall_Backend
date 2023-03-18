@@ -178,10 +178,10 @@ model matches {
   match_players                       match_players[]
   match_quarters                      match_quarters[]
   scorekeeper                         scorekeeper      @relation(fields: [scorekeeper_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "scorekeeper_table")
-  teams_matches_team_1_idToteams      teams            @relation("matches_team_1_idToteams", fields: [team_1_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_1_table")
-  teams_matches_team_2_idToteams      teams            @relation("matches_team_2_idToteams", fields: [team_2_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_2_table")
+  team_1                              teams            @relation("matches_team_1_idToteams", fields: [team_1_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_1_table")
+  team_2                              teams            @relation("matches_team_2_idToteams", fields: [team_2_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_2_table")
   tournaments                         tournaments      @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
-  teams_matches_won_by_team_idToteams teams?           @relation("matches_won_by_team_idToteams", fields: [won_by_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "won_team")
+  won_by_team                         teams?           @relation("matches_won_by_team_idToteams", fields: [won_by_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "won_team")
 }
 
 model scorekeeper {

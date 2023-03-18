@@ -81,8 +81,8 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
     const match_details = await prisma.matches.findUnique({
         where:{id: match_id},
         include: {
-            team_1_id: true,
-            team_2_id: true
+            team_1: true,
+            team_2: true
         }
     })
 
@@ -184,8 +184,8 @@ const teamFoul = catchAsyncErrors( async (req, res, next)=>{
     const match_details = await prisma.matches.findUnique({ 
         where: { id: match_id },
         include: {
-            team_1_id: true,
-            team_2_id: true
+            team_1: true,
+            team_2: true
         } 
     });
 
@@ -233,7 +233,7 @@ const playerFoul = catchAsyncErrors( async (req, res, next)=>{
             player_id
         },
         include:{
-            player_id: true
+            players: true
         }
     })
 

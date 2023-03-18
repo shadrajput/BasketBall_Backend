@@ -5,5 +5,5 @@ env
 
 
 git add .
-git commit -m "get all tournament api added"
+git commit -m "some changes"
 git push origin master

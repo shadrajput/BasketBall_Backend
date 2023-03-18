@@ -63,7 +63,7 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
 
           fs.readFile( oldPath, function (err, data) {
             if (err) {
-                return next(new ErrorHandler(error.message, 500));
+                return next(new ErrorHandler(err.message, 500));
             }
             imagekit.upload({
               file : data,
@@ -118,11 +118,14 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
 const allTournaments = catchAsyncErrors(async(req, res, next)=>{
   const all_tournaments = await prisma.tournaments.findMany({
     where:{
-      is_approved: true,
+      is_approved: false,
+    },
+    include:{
+      users: true
     }
   });
 
-  res.status(201).json({success: true, all_tournaments});
+  res.status(200).json({success: true, all_tournaments});
 })
 
 const updateTournamentDetails = catchAsyncErrors(async(req, res, next) => {
@@ -179,7 +182,7 @@ const updateTournamentDetails = catchAsyncErrors(async(req, res, next) => {
 
           fs.readFile( oldPath, function (err, data) {
             if (err) {
-                return next(new ErrorHandler(error.message, 500));
+                return next(new ErrorHandler(err.message, 500));
             }
             imagekit.upload({
               file : data,
