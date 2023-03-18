@@ -115,6 +115,16 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
 
 })
 
+const allTournaments = catchAsyncErrors(async(req, res, next)=>{
+  const all_tournaments = await prisma.tournaments.findMany({
+    where:{
+      is_approved: true,
+    }
+  });
+
+  res.status(201).json({success: true, all_tournaments});
+})
+
 const updateTournamentDetails = catchAsyncErrors(async(req, res, next) => {
 
   const form = new formidable.IncomingForm();
@@ -332,6 +342,7 @@ const uploadGalleryImage = catchAsyncErrors((req, res, next)=>{
 
 module.exports ={
     tournamentRegistration,
+    allTournaments,
     updateTournamentDetails,
     tournamentDetails,
     startRegistration,

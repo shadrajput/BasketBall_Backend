@@ -8,7 +8,7 @@ const playerRouter = require('./routes/player/player.routes');
 const newsRouter = require("./routes/news/news.routes")
 const galleryRouter = require("./routes/gallery/gallery.routes")
 const scoreboardRouter = require('./routes/scoreboard/scoreboard.routes')
-const matchScoreRouter = require('./routes/score/score.routes')
+const matchRouter = require('./routes/match/match.routes')
 const errorMiddleware = require("./middlewares/errors");
 const cors = require("cors");
 const path = require("path");
@@ -26,7 +26,7 @@ app.use('/players', playerRouter);
 app.use('/news', newsRouter);
 app.use('/gallery', galleryRouter);
 app.use('/scoreboard', scoreboardRouter);
-app.use('/score', matchScoreRouter);
+app.use('/match', matchRouter);
 app.use("/imagekit", imagekitAuthRouter);
 app.use("/mail", mailRouter);
 

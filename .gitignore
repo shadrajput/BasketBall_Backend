@@ -5,5 +5,5 @@ env
 
 
 git add .
-git commit -m "middleware added to verify scorekeeper and scoreboard routes added"
+git commit -m "get all tournament api added"
 git push origin master

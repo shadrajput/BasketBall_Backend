@@ -1,9 +1,10 @@
 const express = require('express');
 const {isAuthenticatedUser} = require('../../middlewares/auth')
-const { tournamentRegistration, updateTournamentDetails, tournamentDetails, startRegistration, closeRegistration, startTournament, endTournament, disqualifyTeam, uploadGalleryImage } = require('./tournament.controller')
+const { tournamentRegistration, allTournaments, updateTournamentDetails, tournamentDetails, startRegistration, closeRegistration, startTournament, endTournament, disqualifyTeam, uploadGalleryImage } = require('./tournament.controller')
 const router = express.Router()
 
 router.post('/registration', tournamentRegistration)
+router.get('/', allTournaments)
 router.put('/update/:tournament_id', updateTournamentDetails)
 router.get('/details/:tournament_id', tournamentDetails)
 router.put('/start-registration/:tournament_id', startRegistration)
