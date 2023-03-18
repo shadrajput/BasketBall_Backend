@@ -178,7 +178,7 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
 
 const teamFoul = catchAsyncErrors( async (req, res, next)=>{
     const match_id = Number(req.params.match_id)
-    const team_id = Number(req.params.team_id)
+    const team_id = Number(req.body.team_id)
     let foulScoreByTeam = '';
 
     const match_details = await prisma.matches.findUnique({ 
@@ -225,7 +225,7 @@ const teamFoul = catchAsyncErrors( async (req, res, next)=>{
 
 const playerFoul = catchAsyncErrors( async (req, res, next)=>{
     const match_id = Number(req.params.match_id)
-    const player_id = Number(req.params.player_id)
+    const player_id = Number(req.body.player_id)
 
     const match_player_details = await prisma.match_players.findFirst({
         where:{
@@ -314,6 +314,8 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
         timeline_start_score_id: last_score_detail.id,
         timeline_end_score_id: last_score_detail.id
     })
+
+    res.status(200).json({success: true, message: 'New quarter started'});
 
 })
 
@@ -452,6 +454,8 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
             }
         }
     })
+
+    res.status(200).json({success: true, message: 'Score reverted'});
         
 })
 
@@ -667,9 +671,15 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
         }
     })
 
+    res.status(200).json({success: true, message: 'Match ended successfully'});
 })
 
 module.exports = {
     startMatch,
     addScore,
+    teamFoul,
+    playerFoul,
+    changeQuarter,
+    undoScore,
+    endMatch
 }
