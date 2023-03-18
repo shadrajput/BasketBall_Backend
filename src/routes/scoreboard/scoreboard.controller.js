@@ -268,7 +268,9 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
 
     //updating current quarter details
     const match_details = await prisma.matches.findUnique({ where: { id: match_id } });
+
     const current_quarter = all_quarters[0];
+
     let quarter_won_by = null
 
     if(current_quarter.team_1_points > current_quarter.team_2_points){
@@ -300,7 +302,6 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
             won_by_team_id: quarter_won_by,
             status: 1,
             is_undo_score: false,
-            timeline_end_score_id: last_score_detail.id
         }
     })
 
@@ -455,20 +456,217 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
 })
 
 const endMatch = catchAsyncErrors( async (req, res, next)=>{
+    const match_id = Number(req.params.match_id);
 
-    //Setting winner of the quarter and updating status of the quarter
+    //-------Setting winner of the quarter and updating status of the quarter-------
 
-    //Setting the winner of the match & update status of the match
+    let current_quarter = await prisma.match_quarters.findFirst({ 
+        where: { match_id, status: 2 }
+    })
+        //Deciding who won the quarter
+    const match_details = await prisma.matches.findUnique({ where: { id: match_id } });
 
-    //Update matches played, won, lost in team table
+    let quarter_won_by = null
 
-    //Update matches played, won, lost in player_statistics table 
+    if(current_quarter.team_1_points > current_quarter.team_2_points){
+        quarter_won_by = match_details.team_1_id
+    }
+    else if(current_quarter.team_2_points > current_quarter.team_1_points){
+        quarter_won_by = match_details.team_2_id
+    }
 
-    //Update is_details editable and status in tournament table
+        //Updating current quarter
+    await prisma.match_quarters.update({
+        where: {
+            id: current_quarter.id
+        },
+        data:{
+            won_by_team_id: quarter_won_by,
+            status: 1,
+            is_undo_score: false,
+        }
+    })
 
-    //Update is_details editable in team table
+    //-------Setting the winner of the match & update status of the match-------
 
-    //update is_token_expired in scorekeeper table
+        //Deciding the winner of the match
+            //getting no. of quarters won by team 1  
+    const team_1_quarters_won = await prisma.match_quarters.findMany({
+        where: {
+            match_id,
+            won_by_team_id: match_details.team_1_id
+        }
+    })
+            //getting no. of quarters won by team 2    
+    const team_2_quarters_won = await prisma.match_quarters.findMany({
+        where: {
+            match_id,
+            won_by_team_id: match_details.team_2_id
+        }
+    })
+
+    let match_won_team = null;
+    let match_lost_team = null;
+
+    if(team_1_quarters_won?.length > team_2_quarters_won?.length){
+        match_won_team = match_details.team_1_id
+        match_lost_team = match_details.team_2_id    
+    }
+    else if(team_2_quarters_won?.length > team_1_quarters_won?.length){
+        match_won_team = match_details.team_2_id;
+        match_lost_team = match_details.team_1_id;
+    }
+
+            //updating won team in match table & tournament status to completed and is_details_editable to true
+    await prisma.matches.update({
+        where:{
+            id: match_id
+        },
+        data:{
+            won_by_team_id: match_won_team,
+            status: 3,
+            tournament_id:{
+                status: 3,
+                is_details_editable: true
+            },
+            scorekeeper_id:{
+                token: null,
+            }
+        }
+    })
+
+    //-------Update matches played, won and lost in teams table and player statistics table-------
+    if(match_won_team != null && match_lost_team != null){
+
+        //For won team
+            //won team
+        await prisma.teams.update({
+            where:{
+                id: match_won_team
+            },
+            data:{
+                matches_played:{
+                    increament: 1
+                },
+                matches_won:{
+                    increament: 1
+                }
+            }
+        })
+
+            //updating won players matches played and won
+        await prisma.match_players.updateMany({ 
+            where: {
+                match_id,
+                team_id: match_won_team
+            },
+            data:{
+                player_id:{
+                    matches_played:{
+                        increament: 1
+                    },
+                    matches_won:{
+                        increament: 1
+                    }
+                }
+            }
+        })
+
+        //For lost team
+            //lost team
+        await prisma.teams.update({
+            where:{
+                id: match_lost_team
+            },
+            data:{
+                matches_played:{
+                    increament: 1
+                },
+                matches_lost:{
+                    increament: 1
+                }
+            }
+        }) 
+
+            //updating lost players matches played and lost
+        await prisma.match_players.updateMany({ 
+            where: {
+                match_id,
+                team_id: match_lost_team
+            },
+            data:{
+                player_id:{
+                    matches_played:{
+                        increament: 1
+                    },
+                    matches_lost:{
+                        increament: 1
+                    }
+                }
+            }
+        })
+    }
+    else{ //match draw
+        //Only increase match played of both the teams
+        await prisma.teams.update({
+            where:{
+                id: match_details.team_1_id
+            },
+            data:{
+                matches_played:{
+                    increament: 1
+                }
+            }
+        })
+
+        await prisma.teams.update({
+            where:{
+                id: match_details.team_2_id
+            },
+            data:{
+                matches_played:{
+                    increament: 1
+                }
+            }
+        })
+
+        //Only increase matches played of all players of both the teams
+        const all_match_players = await prisma.match_players.updateMany({ 
+            where: {
+                match_id,
+            },
+            data:{
+                player_id:{
+                    matches_played: {
+                        increament: 1
+                    }
+                }
+            }
+        })
+    }
+
+
+    //-------Update is_details editable in team table-------
+        //team 1
+    await prisma.teams.update({
+        where:{
+            id: match_details.team_1_id
+        },
+        data:{
+            is_details_editable: true
+        }
+    })
+
+        //team 2
+    await prisma.teams.update({
+        where:{
+            id: match_details.team_2_id
+        },
+        data:{
+            is_details_editable: true
+        }
+    })
+
 })
 
 module.exports = {
