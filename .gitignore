@@ -5,5 +5,5 @@ env
 
 
 git add .
-git commit -m "some changes"
+git commit -m "some changes in prisma default relations in model"
 git push origin master

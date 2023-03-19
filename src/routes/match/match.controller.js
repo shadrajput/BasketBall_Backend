@@ -12,22 +12,22 @@ const matchScore = catchAsyncErrors(async(req, res, next)=>{
             id: match_id,
         },
         include:{
-            tournament_id: true,
-            team_1_id: true,
-            team_2_id: true,
-            scorekeeper_id: true,
-            won_by_team_id
+            tournaments: true,
+            team_1: true,
+            team_2: true,
+            scorekeeper: true,
+            won_by_team: true
         }
     })
 
-    // const all_quarters = await prisma.match_score.findMany({
-    //     include:{
-    //         quarter_id:{
+    const all_quarters = await prisma.match_score.findMany({
+        include:{
+            quarter_id:{
 
-    //         }
-    //     }
+            }
+        }
 
-    // })
+    })
 
     res.status(200).json({
         success: true, 
