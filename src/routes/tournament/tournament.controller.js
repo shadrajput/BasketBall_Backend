@@ -392,6 +392,7 @@ const createPools = catchAsyncErrors(async(req, res, next) => {
 
 const matchFormation = catchAsyncErrors(async(req, res, next)=>{
   const tournament_id = Number(req.params.tournament_id);
+  const round_name = req.body.round_name;
   const formation_method = req.body.formation_method
   const is_formation_by_group = req.body.is_formation_by_group
   const gender_type = req.body.gender_type
@@ -428,31 +429,186 @@ const matchFormation = catchAsyncErrors(async(req, res, next)=>{
           }
         })
         
-        //Formula to count total matches in RR is: N(N-1)/2
-        const no_of_matches = (teams.length * (teams.length -1 )) / 2
-
-        let k=1;
-        for (let j = 0; j < no_of_matches; j++) {
-          await prisma.matches.create({
-            team_1_id: teams[j].team_id,
-            team_2_id: teams[k].team_id,
-            tournament_id,
-            address: tournament_details.address
-            //pending
-          })
-
-          
+        let j=0, k=0;
+        while(j < teams.length){
+          k = j+1
+          while(k < teams.length){
+            k++
+            await prisma.matches.create({
+              tournament_id,
+              team_1_id: teams[j].team_id,
+              team_2_id: teams[k].team_id,
+              address: tournament_details.address,
+              round_name
+            })
+          }
+          j++
         }
-
       }
       
     }
     else{ //KNOCKOUT formation
+
+      //checking if previously divided into upper half and lower half or not
+      const result_teams = await prisma.tournament_teams.findMany({
+        where:{
+          tournament_id,
+          is_seleted: true,
+          is_disqualified: false,
+          NOT:[
+            {is_knockout_upperhalf: null},
+          ],
+          age_categories: {
+            hasEvery: [age_type],
+          },
+          gender_type: {
+            hasEvery: [gender_type],
+          },
+        }
+      })
+
+      if(result_teams.length > 0){
+
+        const upperhalf_teams = getKnockoutUpperLowerHalfTeams (tournament_id, age_type, gender_type, true)
+
+        const lowerhalf_teams = getKnockoutUpperLowerHalfTeams (tournament_id, age_type, gender_type, false)
+
+        if(upperhalf_teams.length == 1 && lowerhalf_teams.length == 1){ //Final round
+           await prisma.matches.create({
+              tournament_id,
+              team_1_id: upperhalf_teams[0].team_id,
+              team_2_id: lowerhalf_teams[0].team_id,
+              address: tournament_details.address,
+              round_name
+            })
+        }
+        else{
+          //upperhalf match formation
+          for(let i=0; i+1 < upperhalf_teams.length; i+=2) {
+            await prisma.matches.create({
+              tournament_id,
+              team_1_id: upperhalf_teams[i].team_id,
+              team_2_id: upperhalf_teams[i+1].team_id,
+              address: tournament_details.address,
+              round_name
+            })
+          }
+  
+          //lowerhalf match formation
+          for(let i=0; i+1 < lowerhalf_teams.length; i+=2) {
+            await prisma.matches.create({
+              tournament_id,
+              team_1_id: lowerhalf_teams[i].team_id,
+              team_2_id: lowerhalf_teams[i+1].team_id,
+              address: tournament_details.address,
+              round_name
+            })
+          }
+        }
+      }
+      else{
+        const teams = await prisma.tournament_teams.findMany({
+          where:{
+            tournament_id,
+            is_seleted: true,
+            is_disqualified: false,
+            age_categories: {
+              hasEvery: [age_type],
+            },
+            gender_type: {
+              hasEvery: [gender_type],
+            },
+          }
+        })
+  
+        let total_byes = 0, i = 1;
+        while(1){
+          if(teams.length < Math.pow(2,i)){
+            total_byes = Math.pow(2,i) - teams.length;
+            break;
+          }
+          i++
+        }
+  
+        let upper_half_bye_teams = total_byes%2 != 0 ? (total_byes-1)/2 : total_byes/2
+        let lower_half_bye_teams = total_byes%2 != 0 ? (total_byes+1)/2 : total_byes/2
+        let upper_half_total_teams = teams.length%2 != 0 ? (teams.length+1)/2 : teams.length/2
+        let lower_half_total_teams = teams.length%2 != 0 ? (teams.length-1)/2 : teams.length/2
+  
+        //updating upperhalf
+        for(let i=0; i<upper_half_total_teams; i++){
+          await prisma.tournament_teams.update({
+            where:{
+              id: teams[i].id
+            },
+            data:{
+              is_knockout_upperhalf: true
+            }
+          })
+        }
+
+        //updating lowerhalf
+        for(let i=0; i<lower_half_total_teams; i++){
+          await prisma.tournament_teams.update({
+            where:{
+              id: teams[i].id
+            },
+            data:{
+              is_knockout_upperhalf: false
+            }
+          })
+        }
+
+        const upperhalf_teams = getKnockoutUpperLowerHalfTeams (tournament_id, age_type, gender_type, true)
+
+        const lowerhalf_teams = getKnockoutUpperLowerHalfTeams (tournament_id, age_type, gender_type, false)
+
+        //upper half teams (not bye) match formation
+        for(let i=0; i+1 < (upper_half_total_teams-upper_half_bye_teams); i+=2) {
+          await prisma.matches.create({
+            tournament_id,
+            team_1_id: upperhalf_teams[i].team_id,
+            team_2_id: upperhalf_teams[i+1].team_id,
+            address: tournament_details.address,
+            round_name
+          })
+        }
+
+        //lower half teams (not bye) match formation
+        for(let i=0; i+1 < (lower_half_total_teams-lower_half_bye_teams); i+=2) {
+          await prisma.matches.create({
+            tournament_id,
+            team_1_id: lowerhalf_teams[i].team_id,
+            team_2_id: lowerhalf_teams[i+1].team_id,
+            address: tournament_details.address,
+            round_name
+          })
+        }
+      }
       
     }
+
+    res.status(201).json({ success: true, message: 'Matches formed successfully'});
   }
 
 })
+
+async function getKnockoutUpperLowerHalfTeams (tournament_id, age_type, gender_type, is_knockout_upperhalf){
+  return await prisma.tournament_teams.findMany({
+    where:{
+      tournament_id,
+      is_seleted: true,
+      is_disqualified: false,
+      is_knockout_upperhalf,
+      age_categories: {
+        hasEvery: [age_type],
+      },
+      gender_type: {
+        hasEvery: [gender_type],
+      },
+    }
+  })
+}
 
 module.exports ={
     tournamentRegistration,
