@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt')
 const { PrismaClient } =  require('@prisma/client')
 const { comparePassword, generateToken } = require('../../middlewares/auth');
 const ErrorHandler = require("../../utils/ErrorHandler");
+const axios = require('axios')
 
 const prisma = new PrismaClient();
 
@@ -24,14 +25,13 @@ const userSignup = catchAsyncErrors(async(req, res, next) =>{
         return next(new ErrorHandler('User already exists with this email'))
     }
 
-
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(password.trim(), 10)
     await prisma.users.create({
         data:{
-            name,
-            email,
+            name: name.trim(),
+            email: email.trim(),
             password: hashedPassword,
-            mobile,
+            mobile: mobile.trim(),
             is_visitor: true,
             is_player: false,
             is_organizer: false,
@@ -56,6 +56,48 @@ const userLogin = catchAsyncErrors(async(req, res, next) =>{
 
     res.status(200).json({success: true, message: 'Login successfully', token, is_account_verified: user.is_verified })
     
+})
+
+const googleLogin = catchAsyncErrors(async(req, res, next)=>{
+    const accessToken = req.headers.authorization
+
+    const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo",{
+		headers: {
+			'Authorization': `Bearer ${accessToken}`,
+		},
+    })
+
+    if(response){
+        const firstName = response.data.given_name;
+        const lastName = response.data.family_name;
+        const email = response.data.email;
+        // const photo = response.data.picture
+
+        const existingUser = await prisma.users.findFirst({where:{email}})
+
+        if(!existingUser){
+            const newUser = await prisma.users.create({
+                data:{
+                    name: `${firstName} ${lastName}`,
+                    email,
+                    is_google: true,
+                    is_visitor: true,
+                    is_player: false,
+                    is_organizer: false,
+                    is_manager: false,
+                    is_admin: false,
+                    is_verified: true,
+                }
+            })
+
+            const token = generateToken(newUser.id);
+            return res.status(201).json({success: true, message: 'Signup successfull', token})
+        }
+        else{
+            const token = generateToken(existingUser.id);
+            return res.status(200).json({success: true, message: 'Login successfull', token})
+        }
+    }
 })
 
 const verifyAccount = catchAsyncErrors(async(req, res, next) => {
@@ -93,5 +135,6 @@ const verifyAccount = catchAsyncErrors(async(req, res, next) => {
 module.exports = {
     userSignup, 
     userLogin,
+    googleLogin,
     verifyAccount
 }

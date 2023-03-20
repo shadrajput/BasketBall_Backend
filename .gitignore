@@ -2,3 +2,8 @@ node_modules
 /env
 env
 .env
+
+
+git add .
+git commit -m "some changes in prisma default relations in model"
+git push origin master

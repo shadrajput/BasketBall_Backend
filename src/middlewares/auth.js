@@ -38,3 +38,26 @@ exports.isAuthenticatedUser = catchAsyncErrors(async(req,res,next)=>{
 
     next();
 })
+
+exports.verifyScorekeeper = catchAsyncErrors(async(req, res, next)=>{
+    const scorekeeper_id = Number(req.params.id)
+    const match_id = Number(req.params.match_id)
+    const token = Number(req.params.token)
+
+    if(token == null){
+        return next(new ErrorHandler("Link expired", 400))
+    }
+
+    const scorekeeper_details = await prisma.scorekeeper.findFirst({
+        where:{
+            id: scorekeeper_id,
+            token
+        }
+    })
+
+    if(!scorekeeper_details){
+        return next(new ErrorHandler("You are not authorized to access this page", 400))
+    }
+
+    next();    
+})
