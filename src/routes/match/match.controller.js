@@ -20,14 +20,12 @@ const matchScore = catchAsyncErrors(async(req, res, next)=>{
         }
     })
 
-    const all_quarters = await prisma.match_score.findMany({
-        include:{
-            quarter_id:{
+    // const all_quarters = await prisma.match_score.findMany({
+    //     include:{
+    //         quarter: true
+    //     }
 
-            }
-        }
-
-    })
+    // })
 
     res.status(200).json({
         success: true, 
@@ -38,6 +36,11 @@ const matchScore = catchAsyncErrors(async(req, res, next)=>{
     })
 });
 
+const updateMatchDetails = catchAsyncErrors(async(req, res, next)=>{
+
+});
+
 module.exports = {
-    matchScore
+    matchScore,
+    updateMatchDetails
 }

@@ -321,7 +321,8 @@ const disqualifyTeam = catchAsyncErrors(async(req, res, next) => {
     where:{
       AND:[
         {tournament_id: Number(tournament_id)},
-        {team_id: Number(team_id)}
+        {team_id: Number(team_id)},
+        {is_selected: true}
       ]
     }
   })
@@ -339,8 +340,118 @@ const disqualifyTeam = catchAsyncErrors(async(req, res, next) => {
   res.status(200).json({success: true, message: "Team disqualified successfully"})
 })
 
-const uploadGalleryImage = catchAsyncErrors((req, res, next)=>{
-  
+const createPools = catchAsyncErrors(async(req, res, next) => {
+  const tournament_id = Number(req.params.tournament_id);
+  const total_groups = req.body.total_groups
+  const teams_per_group = req.body.teams_per_group
+  const total_bye_teams = req.body.total_bye_teams
+
+  const pool_names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'P', 'Q']
+
+  if(total_bye_teams == 0){
+    const all_teams = await prisma.tournament_teams.findMany({
+      where: { 
+        tournament_id,
+        is_disqualified: false,
+        is_selected: true
+      }
+    })
+
+    //shuffling the teams in an array
+    for(let i=0; i<10; ) {
+      const random_no_1 = Match.floor((Math.random() * 10))
+      const random_no_2 = Match.floor((Math.random() * 10))
+
+      if(random_no_1 != random_no_2) {
+        i++
+        let temp = all_teams[random_no_1];
+        all_teams[random_no_1] = all_teams[random_no_2]
+        all_teams[random_no_2] = temp
+      }
+    }
+
+    //Giving pool names to the teams
+    let j=0, count=1
+    for(let i=0; i<all_teams.length; i++){
+      await prisma.tournament_teams.update({
+        where:{
+          id: all_teams[i].id,
+        },
+        data:{
+          pool_name: pool_names[j]
+        }
+      })
+
+      if(count == teams_per_group){
+        count = 1;
+        j++;
+      }
+    }
+  }
+})
+
+const matchFormation = catchAsyncErrors(async(req, res, next)=>{
+  const tournament_id = Number(req.params.tournament_id);
+  const formation_method = req.body.formation_method
+  const is_formation_by_group = req.body.is_formation_by_group
+  const gender_type = req.body.gender_type
+  const age_type = req.body.age_type
+
+  const tournament_details = await prisma.tournaments.findUnique({ where:{id: tournament_id}})
+
+  if(is_formation_by_group){
+    const pools = await prisma.tournament_teams.groupBy({
+      by:['pool_name'],
+      where:{
+        tournament_id,
+        is_selected: true,
+        is_disqualified: false
+      }
+    }) //How to access: pools[0].pool_name
+
+    //ROUND ROBIN formation
+    if(formation_method == 'league'){
+
+      for(let i=0; i<pools.length; i++) {
+        const teams = await prisma.tournament_teams.findMany({
+          where:{
+            tournament_id,
+            is_seleted: true,
+            is_disqualified: false,
+            pool_name: pools[i].pool_name,
+            age_categories: {
+              hasEvery: [age_type],
+            },
+            gender_type: {
+              hasEvery: [gender_type],
+            },
+          }
+        })
+        
+        //Formula to count total matches in RR is: N(N-1)/2
+        const no_of_matches = (teams.length * (teams.length -1 )) / 2
+
+        let k=1;
+        for (let j = 0; j < no_of_matches; j++) {
+          await prisma.matches.create({
+            team_1_id: teams[j].team_id,
+            team_2_id: teams[k].team_id,
+            tournament_id,
+            address: tournament_details.address
+            //pending
+          })
+
+          
+        }
+
+      }
+      
+    }
+    else{ //KNOCKOUT formation
+      
+    }
+  }
+
 })
 
 module.exports ={
@@ -353,5 +464,6 @@ module.exports ={
     startTournament,
     endTournament,
     disqualifyTeam,
-    uploadGalleryImage
+    createPools,
+    matchFormation
 }

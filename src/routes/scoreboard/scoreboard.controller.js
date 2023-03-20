@@ -266,8 +266,15 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
         return next(new ErrorHandler("This game can't have more than 5 quarters"))
     }
 
-    //updating current quarter details
-    const match_details = await prisma.matches.findUnique({ where: { id: match_id } });
+    //updating held quarters in match_details 
+    const match_details = await prisma.matches.update({ 
+        where: { id: match_id },
+        data:{
+            quarters:{
+                increment: 1
+            }
+        } 
+    });
 
     const current_quarter = all_quarters[0];
 
@@ -532,6 +539,9 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
             tournament_id:{
                 status: 3,
                 is_details_editable: true
+            },
+            quarters:{
+                increment: 1
             },
             scorekeeper_id:{
                 token: null,
