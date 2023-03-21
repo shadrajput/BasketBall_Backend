@@ -48,6 +48,29 @@ async function httpGetAllTeams(req, res, next) {
   }
 }
 
+async function httpSearchTeamByName(req, res, next) {
+  const query = req.body?.query;
+  if (!query) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Please Enter Team name" });
+  }
+  try {
+    const teams = await prisma.teams.findMany({
+      where: {
+        team_name: {
+          contains: query,
+          mode: "insensitive",
+        },
+      },
+    });
+
+    return res.status(200).json({ success: true, data: teams });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function uploadLogo(formData) {
   const { files } = formData;
   if (!files || !files.team_logo) {
@@ -61,4 +84,4 @@ async function uploadLogo(formData) {
   }
 }
 
-module.exports = { httpTeamRegister, httpGetAllTeams };
+module.exports = { httpTeamRegister, httpSearchTeamByName, httpGetAllTeams };
