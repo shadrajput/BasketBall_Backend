@@ -84,4 +84,34 @@ async function uploadLogo(formData) {
   }
 }
 
-module.exports = { httpTeamRegister, httpSearchTeamByName, httpGetAllTeams };
+async function httpGetTeamDetailById(req, res, next) {
+  const team_id = req.params?.id;
+  console.log(team_id);
+  try {
+    const team = await prisma.teams.findUnique({
+      where: {
+        id: Number(team_id),
+      },
+      include: {
+        team_players: true,
+        tournament_teams: true,
+        users: true,
+      },
+    });
+
+    if (!team) {
+      return res.status(400).json({ success: true, message: "Team Not found" });
+    }
+
+    return res.status(200).json({ success: true, data: team });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = {
+  httpTeamRegister,
+  httpGetTeamDetailById,
+  httpSearchTeamByName,
+  httpGetAllTeams,
+};
