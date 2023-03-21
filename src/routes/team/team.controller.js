@@ -1,72 +1,51 @@
-const catchAsyncErrors = require("../../middlewares/catchAsyncErrors");
-const formidable = require("formidable");
-const ImageKit = require("imagekit");
-const fs = require("fs");
+const { uploadImage } = require("../../helper/imageUpload");
+const { PrismaClient } = require("@prisma/client");
+const parseFormData = require("../../helper/parseForm");
+const { createTeam, createTeamPlayers } = require("./team.model");
 
-const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
-});
+const prisma = new PrismaClient();
 
-const httpTeamRegister = catchAsyncErrors(async (req, res, next) => {
-  const form = new formidable.IncomingForm();
-  form.parse(req, async function (err, fields, files) {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
+async function httpTeamRegister(req, res, next) {
+  try {
+    const formData = await parseFormData(req);
+    const teamData = JSON.parse(formData?.fields?.data);
+    const teamName = teamData.TeamInfo.team_name;
+    const existingTeam = await prisma.teams.findFirst({
+      where: {
+        team_name: {
+          equals: teamName,
+          mode: "insensitive",
+        },
+      },
+    });
+
+    if (existingTeam) {
+      throw new Error("Please change the Team name");
     }
 
-    let logo = "";
+    const logo = await uploadLogo(formData);
+    const team = await createTeam(teamData, logo);
+    const teamPlayers = await createTeamPlayers(teamData.PlayerList, team.id);
 
-    const myPromise = new Promise(async (resolve, reject) => {
-      if (files.team_logo.originalFilename != "" && files.team_logo.size != 0) {
-        const ext = files.team_logo.mimetype.split("/")[1].trim();
+    return res.status(201).json({ success: true, team, players: teamPlayers });
+  } catch (err) {
+    next(err);
+  }
+}
 
-        if (files.team_logo.size >= 2000000) {
-          // 2000000(bytes) = 2MB
-          return next(
-            new ErrorHandler("Photo size should be less than 2MB", 400)
-          );
-        }
-        if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-          return next(
-            new ErrorHandler("Only JPG, JPEG or PNG logo is allowed", 400)
-          );
-        }
+async function httpGetAllTeams(req, res, next) {}
 
-        var oldPath = files.team_logo.filepath;
-        var fileName = Date.now() + "_" + files.team_logo.originalFilename;
+async function uploadLogo(formData) {
+  const { files } = formData;
+  if (!files || !files.team_logo) {
+    return "";
+  }
 
-        fs.readFile(oldPath, function (err, data) {
-          if (err) {
-            return next(new ErrorHandler(error.message, 500));
-          }
-          imagekit.upload(
-            {
-              file: data,
-              fileName: fileName,
-              overwriteFile: true,
-              folder: "/team_images",
-            },
-            function (error, result) {
-              if (error) {
-                return next(new ErrorHandler(error.message, 500));
-              }
-              logo = result.url;
-              console.log("Logo ", logo);
-              resolve();
-            }
-          );
-        });
-      } else {
-        resolve();
-      }
-    });
-    console.log(files.team_logo.originalFilename);
-    const TeamData = JSON.parse(fields?.data);
-  });
-});
+  try {
+    return await uploadImage(files.team_logo, "team_images");
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
 
-module.exports = {
-  httpTeamRegister,
-};
+module.exports = { httpTeamRegister, httpGetAllTeams };
