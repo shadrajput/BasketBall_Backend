@@ -20,7 +20,7 @@ async function createTeam(teamData, logo) {
       coach_mobile,
       asst_coach_name: assistant_coach_mobile,
       asst_coach_mobile: assistant_coach_name,
-      user_id: 1, // TODO: update this with actual user ID
+      user_id: 1,
     },
   });
 }

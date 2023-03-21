@@ -1,8 +1,8 @@
 const express = require("express");
-const { httpTeamRegister } = require("./team.controller");
+const { httpTeamRegister, httpGetAllTeams } = require("./team.controller");
 
 const teamRouter = express.Router();
 
 teamRouter.post("/registration", httpTeamRegister);
-teamRouter.post("/list")
+teamRouter.get("/list/:page", httpGetAllTeams);
 module.exports = teamRouter;

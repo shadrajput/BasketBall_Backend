@@ -33,7 +33,20 @@ async function httpTeamRegister(req, res, next) {
   }
 }
 
-async function httpGetAllTeams(req, res, next) {}
+async function httpGetAllTeams(req, res, next) {
+  console.log(req.params.page);
+  const page = req.params.page;
+  try {
+    const teams = await prisma.teams.findMany({
+      orderBy: { matches_won: "desc" },
+      skip: page * 5,
+      take: 5,
+    });
+    return res.status(200).json({ success: true, data: teams });
+  } catch (error) {
+    next(error);
+  }
+}
 
 async function uploadLogo(formData) {
   const { files } = formData;
