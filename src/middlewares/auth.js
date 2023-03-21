@@ -59,5 +59,17 @@ exports.verifyScorekeeper = catchAsyncErrors(async(req, res, next)=>{
         return next(new ErrorHandler("You are not authorized to access this page", 400))
     }
 
+    const match_detail = await prisma.matches.findFirst({
+      where: {
+        scorekeeper_id: scorekeeper_details.id
+      },
+    });
+
+    if (!match_detail || match_detail.id != match_id) {
+      return next(
+        new ErrorHandler("You are not authorized to access this page", 400)
+      );
+    }
+
     next();    
 })

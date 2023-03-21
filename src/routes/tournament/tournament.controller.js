@@ -493,11 +493,13 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
           while (k < teams.length) {
             k++;
             await prisma.matches.create({
-              tournament_id,
-              team_1_id: teams[j].team_id,
-              team_2_id: teams[k].team_id,
-              address: tournament_details.address,
-              round_name,
+              data: {
+                tournament_id,
+                team_1_id: teams[j].team_id,
+                team_2_id: teams[k].team_id,
+                address: tournament_details.address,
+                round_name,
+              },
             });
           }
           j++;
@@ -540,32 +542,38 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
         //Final round
         if (upperhalf_teams.length == 1 && lowerhalf_teams.length == 1) {
           await prisma.matches.create({
-            tournament_id,
-            team_1_id: upperhalf_teams[0].team_id,
-            team_2_id: lowerhalf_teams[0].team_id,
-            address: tournament_details.address,
-            round_name,
+            data: {
+              tournament_id,
+              team_1_id: upperhalf_teams[0].team_id,
+              team_2_id: lowerhalf_teams[0].team_id,
+              address: tournament_details.address,
+              round_name,
+            },
           });
         } else {
           //upperhalf match formation
           for (let i = 0; i + 1 < upperhalf_teams.length; i += 2) {
             await prisma.matches.create({
-              tournament_id,
-              team_1_id: upperhalf_teams[i].team_id,
-              team_2_id: upperhalf_teams[i + 1].team_id,
-              address: tournament_details.address,
-              round_name,
+              data: {
+                tournament_id,
+                team_1_id: upperhalf_teams[i].team_id,
+                team_2_id: upperhalf_teams[i + 1].team_id,
+                address: tournament_details.address,
+                round_name,
+              },
             });
           }
 
           //lowerhalf match formation
           for (let i = 0; i + 1 < lowerhalf_teams.length; i += 2) {
             await prisma.matches.create({
-              tournament_id,
-              team_1_id: lowerhalf_teams[i].team_id,
-              team_2_id: lowerhalf_teams[i + 1].team_id,
-              address: tournament_details.address,
-              round_name,
+              data: {
+                tournament_id,
+                team_1_id: lowerhalf_teams[i].team_id,
+                team_2_id: lowerhalf_teams[i + 1].team_id,
+                address: tournament_details.address,
+                round_name,
+              },
             });
           }
         }
@@ -658,11 +666,13 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
           i += 2
         ) {
           await prisma.matches.create({
-            tournament_id,
-            team_1_id: upperhalf_teams[i].team_id,
-            team_2_id: upperhalf_teams[i + 1].team_id,
-            address: tournament_details.address,
-            round_name,
+            data: {
+              tournament_id,
+              team_1_id: upperhalf_teams[i].team_id,
+              team_2_id: upperhalf_teams[i + 1].team_id,
+              address: tournament_details.address,
+              round_name,
+            },
           });
         }
 
@@ -673,11 +683,13 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
           i += 2
         ) {
           await prisma.matches.create({
-            tournament_id,
-            team_1_id: lowerhalf_teams[i].team_id,
-            team_2_id: lowerhalf_teams[i + 1].team_id,
-            address: tournament_details.address,
-            round_name,
+            data: {
+              tournament_id,
+              team_1_id: lowerhalf_teams[i].team_id,
+              team_2_id: lowerhalf_teams[i + 1].team_id,
+              address: tournament_details.address,
+              round_name,
+            },
           });
         }
       }

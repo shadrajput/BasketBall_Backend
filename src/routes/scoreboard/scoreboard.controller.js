@@ -45,10 +45,12 @@ const startMatch = catchAsyncErrors(async(req, res, next)=>{
         }
     })
     await prisma.match_quarters.create({
-        match_id,
-        quarter_number: 1,
-        timeline_start_score_id: last_score_detail.id,
-        timeline_end_score_id: last_score_detail.id
+        data:{
+            match_id,
+            quarter_number: 1,
+            timeline_start_score_id: last_score_detail.id,
+            timeline_end_score_id: last_score_detail.id
+        }
     })
 
     res.status(200).json({success: true, message: 'Match has been started'});
@@ -156,11 +158,13 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
 
     //Adding new entry in match_score table
     const match_score_details = await prisma.match_score.create({
-        team_id,
-        player_id,
-        points,
-        point_status: point_type,
-        quarter_id: quarter_details.id
+        data:{
+            team_id,
+            player_id,
+            points,
+            point_status: point_type,
+            quarter_id: quarter_details.id
+        }
     })
 
     //updating timeline_end_id in match_quarters table
@@ -315,11 +319,13 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
 
     //Creating new quarter
     await prisma.match_quarters.create({
-        match_id,
-        is_undo_score: true,
-        quarter_number: all_quarters.length,
-        timeline_start_score_id: last_score_detail.id,
-        timeline_end_score_id: last_score_detail.id
+        data:{
+            match_id,
+            is_undo_score: true,
+            quarter_number: all_quarters.length,
+            timeline_start_score_id: last_score_detail.id,
+            timeline_end_score_id: last_score_detail.id
+        }
     })
 
     res.status(200).json({success: true, message: 'New quarter started'});
