@@ -1,5 +1,6 @@
 const ImageKit = require("imagekit");
-const fs = require("fs"); 
+const fs = require("fs");
+const ErrorHandler = require("../utils/ErrorHandler");
 
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
@@ -47,4 +48,27 @@ async function uploadImage(file, folder) {
   });
 }
 
-module.exports = { uploadImage };
+const searchImage = async (name) => {
+  const result = await imagekit.listFiles({
+    searchQuery: `'name'="${name}"`,
+  });
+  if (result && result.length > 0) {
+    return result[0].fileId;
+  }
+  return null;
+};
+
+async function deleteImage(name) {
+  const image = name.split("/")[5];
+
+  try {
+    const imageID = await searchImage(image);
+    if (imageID) {
+      await imagekit.deleteFile(imageID);
+    }
+  } catch (error) {
+    return next(new ErrorHandler("Failed to update logo", 500));
+  }
+}
+
+module.exports = { uploadImage, deleteImage };

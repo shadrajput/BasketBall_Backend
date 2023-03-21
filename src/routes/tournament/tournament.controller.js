@@ -22,7 +22,8 @@ const tournamentRegistration = catchAsyncErrors(async(req, res, next) => {
         return res.status(500).json({ success: false, message: err.message });
       }
 
-      const result = await prisma.tournaments.findFirst({ 
+      const result = await prisma.tournaments.
+      findFirst({ 
           where: {
               AND:[
                   {

@@ -1,4 +1,4 @@
-const { uploadImage } = require("../../helper/imageUpload");
+const { uploadImage, deleteImage } = require("../../helper/imageUpload");
 const { PrismaClient } = require("@prisma/client");
 const parseFormData = require("../../helper/parseForm");
 const { createTeam, createTeamPlayers } = require("./team.model");
@@ -30,6 +30,24 @@ async function httpTeamRegister(req, res, next) {
     return res.status(201).json({ success: true, team, players: teamPlayers });
   } catch (err) {
     next(err);
+  }
+}
+
+async function httpUpdateTeam(req, res, next) {
+  try {
+    const formData = await parseFormData(req);
+    const teamData = JSON.parse(formData?.fields?.data);
+    let logo = "";
+    if (teamData.oldImage != teamData.logo) {
+      await deleteImage(teamData?.oldImage);
+    } else {
+      logo = await uploadLogo(formData);
+    }
+
+    
+
+  } catch (error) {
+    next(error);
   }
 }
 
