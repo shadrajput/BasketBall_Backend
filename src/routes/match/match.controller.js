@@ -61,13 +61,10 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: {
-      match_details,
-      all_quarters,
-      team_1_players,
-      team_2_players,
-      // match_score
-    },
+    match_details,
+    all_quarters,
+    team_1_players,
+    team_2_players,
   });
 });
 
@@ -101,6 +98,7 @@ const updateMatchDetails = catchAsyncErrors(async (req, res, next) => {
       start_date: new Date(start_date),
       start_time,
       address,
+      scorekeeper_id: scorekeeper_details.id
     },
   });
 

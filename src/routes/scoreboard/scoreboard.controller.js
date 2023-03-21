@@ -390,16 +390,6 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
     })
 
 
-    //************************************
-    //updating timeline end in match_quarters talbe
-    // await prisma.match_quarters.update({
-    //     where: {
-
-    //     }
-    // })
-    //************************************
-
-
     //decreasing the team point in match_quarters table
 
         //getting match details

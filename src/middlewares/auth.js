@@ -71,5 +71,11 @@ exports.verifyScorekeeper = catchAsyncErrors(async(req, res, next)=>{
       );
     }
 
+    if (match_detail.status == 3 || match_detail.status == -1) {
+      return next(
+        new ErrorHandler("Your link has expired", 400)
+      );
+    }
+
     next();    
 })
