@@ -448,7 +448,6 @@ const createPools = catchAsyncErrors(async (req, res, next) => {
   const tournament_id = Number(req.params.tournament_id);
   const total_groups = req.body.total_groups;
   const teams_per_group = req.body.teams_per_group;
-  const total_bye_teams = req.body.total_bye_teams;
 
   const pool_names = [
     "A",
@@ -468,45 +467,47 @@ const createPools = catchAsyncErrors(async (req, res, next) => {
     "Q",
   ];
 
-  if (total_bye_teams == 0) {
-    const all_teams = await prisma.tournament_teams.findMany({
+  const all_teams = await prisma.tournament_teams.findMany({
+    where: {
+      tournament_id,
+      is_disqualified: false,
+      is_selected: 1,
+    },
+  });
+
+  if (all_teams%teams_per_group != 0){
+    return new ErrorHandler(`Can't make pools with ${teams_per_group} teams per group`, 400);
+  }
+  
+  //shuffling the teams in an array
+  for (let i = 0; i < 10; ) {
+    const random_no_1 = Match.floor(Math.random() * 10);
+    const random_no_2 = Match.floor(Math.random() * 10);
+
+    if (random_no_1 != random_no_2) {
+      i++;
+      let temp = all_teams[random_no_1];
+      all_teams[random_no_1] = all_teams[random_no_2];
+      all_teams[random_no_2] = temp;
+    }
+  }
+
+  //Giving pool names to the teams
+  let j = 0,
+    count = 1;
+  for (let i = 0; i < all_teams.length; i++) {
+    await prisma.tournament_teams.update({
       where: {
-        tournament_id,
-        is_disqualified: false,
-        is_selected: 1,
+        id: all_teams[i].id,
+      },
+      data: {
+        pool_name: pool_names[j],
       },
     });
 
-    //shuffling the teams in an array
-    for (let i = 0; i < 10; ) {
-      const random_no_1 = Match.floor(Math.random() * 10);
-      const random_no_2 = Match.floor(Math.random() * 10);
-
-      if (random_no_1 != random_no_2) {
-        i++;
-        let temp = all_teams[random_no_1];
-        all_teams[random_no_1] = all_teams[random_no_2];
-        all_teams[random_no_2] = temp;
-      }
-    }
-
-    //Giving pool names to the teams
-    let j = 0,
+    if (count == teams_per_group) {
       count = 1;
-    for (let i = 0; i < all_teams.length; i++) {
-      await prisma.tournament_teams.update({
-        where: {
-          id: all_teams[i].id,
-        },
-        data: {
-          pool_name: pool_names[j],
-        },
-      });
-
-      if (count == teams_per_group) {
-        count = 1;
-        j++;
-      }
+      j++;
     }
   }
 });
