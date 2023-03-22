@@ -27,15 +27,15 @@ exports.comparePassword = async function (enteredPassword, dbPassword) {
 
 //Authenticate user
 exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
-  const token = req.headers.token;
+  // const token = req.headers.token;
 
-  if (!token) {
-    return next(new ErrorHandler("Please login to access this resource", 401));
-  }
+  // if (!token) {
+  //   return next(new ErrorHandler("Please login to access this resource", 401));
+  // }
 
-  const user_id = jwt.verify(token, JWTSign);
+  // const user_id = jwt.verify(token, JWTSign);
 
-  req.user = await prisma.users.findUnique({ where: { id: user_id } });
+  // req.user = await prisma.users.findUnique({ where: { id: user_id } });
 
   next();
 });
