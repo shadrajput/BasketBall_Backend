@@ -1,5 +1,4 @@
 const express = require('express');
-const {isAuthenticatedUser} = require('../../middlewares/auth')
 const {userSignup, userLogin, googleLogin, verifyAccount} = require('./user.controller')
 const router = express.Router()
 

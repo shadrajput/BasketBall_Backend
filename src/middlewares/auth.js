@@ -93,3 +93,5 @@ exports.verifyScorekeeper = catchAsyncErrors(async (req, res, next) => {
 
   next();
 });
+
+//authenticate tounament organizer

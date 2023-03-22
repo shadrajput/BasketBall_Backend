@@ -133,12 +133,16 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
 const allTournaments = catchAsyncErrors(async (req, res, next) => {
   const all_tournaments = await prisma.tournaments.findMany({
     where: {
-      is_approved: false,
+      is_approved: true,
     },
     include: {
       users: true,
     },
   });
+
+  if (all_tournaments.length == 0) {
+    return next(new ErrorHandler("No tournaments found"));
+  }
 
   res.status(200).json({ success: true, all_tournaments });
 });
@@ -263,8 +267,8 @@ const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
 const tournamentDetails = catchAsyncErrors(async (req, res, next) => {
   const { tournament_id } = req.params;
 
-  const tournamentDetails = await prisma.tournaments.findUnique({
-    where: { id: Number(tournament_id) },
+  const tournamentDetails = await prisma.tournaments.findFirst({
+    where: { id: Number(tournament_id), is_approved: true },
     include: {
       tournament_sponsors: true,
       tournament_referees: true,
@@ -351,6 +355,67 @@ const endTournament = catchAsyncErrors(async (req, res, next) => {
     .json({ success: true, message: "Tournament ended successfully" });
 });
 
+const teamsRequests = catchAsyncErrors(async (req, res, next) => {
+  const tournament_id = Number(req.params.tournament_id);
+
+  const teams = await prisma.tournament_teams.findMany({
+    where: {
+      tournament_id,
+      is_selected: 2, //pending
+    },
+  });
+
+  res.status(200).json({ success: true, teams });
+});
+
+const acceptTeamRequest = catchAsyncErrors(async (req, res, next) => {
+  const tournament_id = Number(req.params.tournament_id);
+  const team_id = Number(req.body.team_id);
+
+  const tournament_team = await prisma.tournament_teams.findFirst({
+    where: {
+      tournament_id,
+      team_id,
+    },
+  });
+
+  await prisma.tournament_teams.update({
+    where: {
+      id: tournament_team.id,
+    },
+    data: {
+      is_selected: 1,
+    },
+  });
+
+  res.status(200).json({ success: true, message: 'Team selected successfully' });
+});
+
+const rejectTeamRequest = catchAsyncErrors(async (req, res, next) => {
+  const tournament_id = Number(req.params.tournament_id);
+  const team_id = Number(req.body.team_id);
+  const reject_reason = req.body.reject_reason
+
+  const tournament_team = await prisma.tournament_teams.findFirst({
+    where: {
+      tournament_id,
+      team_id,
+    },
+  });
+
+  await prisma.tournament_teams.update({
+    where: {
+      id: tournament_team.id,
+    },
+    data: {
+      is_selected: 0,
+      reject_reason,
+    },
+  });
+
+  res.status(200).json({ success: true, message: 'Team rejected successfully' });
+});
+
 const disqualifyTeam = catchAsyncErrors(async (req, res, next) => {
   const { tournament_id, team_id } = req.params;
 
@@ -359,7 +424,7 @@ const disqualifyTeam = catchAsyncErrors(async (req, res, next) => {
       AND: [
         { tournament_id: Number(tournament_id) },
         { team_id: Number(team_id) },
-        { is_selected: true },
+        { is_selected: 1 },
       ],
     },
   });
@@ -408,7 +473,7 @@ const createPools = catchAsyncErrors(async (req, res, next) => {
       where: {
         tournament_id,
         is_disqualified: false,
-        is_selected: true,
+        is_selected: 1,
       },
     });
 
@@ -463,7 +528,7 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
       by: ["pool_name"],
       where: {
         tournament_id,
-        is_selected: true,
+        is_selected: 1,
         is_disqualified: false,
       },
     });
@@ -474,7 +539,7 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
         const teams = await prisma.tournament_teams.findMany({
           where: {
             tournament_id,
-            is_seleted: true,
+            is_seleted: 1,
             is_disqualified: false,
             pool_name: pools[i].pool_name,
             age_categories: {
@@ -512,7 +577,7 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
       const result_teams = await prisma.tournament_teams.findMany({
         where: {
           tournament_id,
-          is_seleted: true,
+          is_seleted: 1,
           is_disqualified: false,
           NOT: [{ is_knockout_upperhalf: null }],
           age_categories: {
@@ -581,7 +646,7 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
         const teams = await prisma.tournament_teams.findMany({
           where: {
             tournament_id,
-            is_seleted: true,
+            is_seleted: 1,
             is_disqualified: false,
             age_categories: {
               hasEvery: [age_type],
@@ -701,6 +766,7 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
+//Helper function
 async function getKnockoutUpperLowerHalfTeams(
   tournament_id,
   age_type,
@@ -710,7 +776,7 @@ async function getKnockoutUpperLowerHalfTeams(
   return await prisma.tournament_teams.findMany({
     where: {
       tournament_id,
-      is_seleted: true,
+      is_seleted: 1,
       is_disqualified: false,
       is_knockout_upperhalf,
       age_categories: {
@@ -732,6 +798,9 @@ module.exports = {
   closeRegistration,
   startTournament,
   endTournament,
+  teamsRequests,
+  acceptTeamRequest,
+  rejectTeamRequest,
   disqualifyTeam,
   createPools,
   matchFormation,

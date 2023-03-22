@@ -1,11 +1,18 @@
-const express = require('express');
-const { addgallery,allGellery,oneGalleryDetails,updateGalleryDetails,deleteGalleryDetails } = require('./gallery.controller')
-const router = express.Router()
+const express = require("express");
+const {
+  addgallery,
+  allGellery,
+  oneGalleryDetails,
+  updateGalleryDetails,
+  deleteGalleryDetails,
+} = require("./gallery.controller");
+const { isAuthenticatedUser } = require("../../middlewares/auth");
+const router = express.Router();
 
-router.post('/add', addgallery)
-router.get('/', allGellery)
-router.get('/:id', oneGalleryDetails)
-router.put('/update/:id', updateGalleryDetails)
-router.delete('/delete/:id', deleteGalleryDetails)
+router.post("/add", isAuthenticatedUser, addgallery);
+router.get("/", allGellery);
+router.get("/:id", oneGalleryDetails);
+router.put("/update/:id", isAuthenticatedUser, updateGalleryDetails);
+router.delete("/delete/:id", isAuthenticatedUser, deleteGalleryDetails);
 
-module.exports = router
+module.exports = router;
