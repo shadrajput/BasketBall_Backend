@@ -18,8 +18,8 @@ async function createTeam(teamData, logo) {
       about_team,
       coach_name,
       coach_mobile,
-      asst_coach_name: assistant_coach_mobile,
-      asst_coach_mobile: assistant_coach_name,
+      asst_coach_name: assistant_coach_name,
+      asst_coach_mobile: assistant_coach_mobile,
       user_id: 1,
     },
   });
