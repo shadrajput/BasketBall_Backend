@@ -118,7 +118,11 @@ async function httpGetTeamDetailById(req, res, next) {
         id: Number(team_id),
       },
       include: {
-        team_players: true,
+        team_players: {
+          include: {
+            players: true,
+          },
+        },
         tournament_teams: true,
         users: true,
       },
