@@ -22,7 +22,8 @@ const {
 const router = express.Router();
 
 router.post("/registration", isAuthenticatedUser, tournamentRegistration);
-router.get("/", isAuthenticatedUser, allTournaments);
+router.get("/", 
+isAuthenticatedUser, allTournaments);
 router.get("/details/:tournament_id", isAuthenticatedUser, tournamentDetails);
 router.put(
   "/update/:tournament_id",

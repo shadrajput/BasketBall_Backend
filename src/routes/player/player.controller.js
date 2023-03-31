@@ -104,7 +104,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
 
-    const AllPlayer = await prisma.players.findMany({
+    const all_players = await prisma.players.findMany({
         include: {
             player_statistics: true,
             users: true
@@ -112,9 +112,9 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
     })
 
     res.status(200).json({
-        AllPlayer: AllPlayer,
+        all_players: all_players,
         success: true,
-        message: "All Player"
+        message: "all_players"
     })
 })
 
@@ -124,9 +124,40 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
 
+    const { player_id } = req.params
+
+    const SinglePlayerDetails = await prisma.players.findFirst({
+        where: {
+            id: Number(player_id)
+        },
+        include: {
+            player_statistics: true,
+            users: true,
+            team_players : {
+                include:{
+                    teams:true
+                }
+            }
+        },
+    })
+
+    res.status(200).json({
+        SinglePlayerDetails: SinglePlayerDetails,
+        success: true,
+        message: "Single player details"
+    })
+
+})
+
+
+// ----------------------------------------------------
+// ------------ one_Player_Details_BY_ID --------------
+// ----------------------------------------------------
+const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
+
     const { number } = req.params
 
-    const onePlayerDetails = await prisma.players.findFirst({
+    const SinglePlayerDetails = await prisma.players.findFirst({
         where: {
             alternate_mobile: number
         },
@@ -137,35 +168,11 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
     })
 
     res.status(200).json({
-        onePlayerDetails: onePlayerDetails,
+        SinglePlayerDetails: SinglePlayerDetails,
         success: true,
-        message: "One Player Details"
-    })
-})
-
-
-// ----------------------------------------------------
-// ------------ one_Player_Details_BY_ID --------------
-// ----------------------------------------------------
-const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
-
-    const { player_id } = req.params
-
-    const onePlayerDetails = await prisma.players.findFirst({
-        where: {
-            id: Number(player_id)
-        },
-        include: {
-            player_statistics: true,
-            users: true
-        },
+        message: "Single player details"
     })
 
-    res.status(200).json({
-        onePlayerDetails: onePlayerDetails,
-        success: true,
-        message: "One Player Details"
-    })
 })
 
 
