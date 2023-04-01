@@ -137,7 +137,7 @@ exports.isAuthTournamentOrganizer = catchAsyncErrors(async (req, res, next) => {
   next();
 });
 
-//Authentication for player
+// Authentication for player
 exports.isAuthPlayer = catchAsyncErrors(async (req, res, next) => {
   if (!req.user.is_player) {
     return next(new ErrorHandler("Unauthorized access", 401));
