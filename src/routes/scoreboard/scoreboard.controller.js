@@ -18,6 +18,9 @@ function getPlayerRankingPoints(tournament_level){
     else if(tournament_level == 'local'){
         return 1
     }
+    else{
+        return 0
+    }
 }
 //***************************************************************
 
