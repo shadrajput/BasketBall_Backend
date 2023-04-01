@@ -5,5 +5,5 @@ env
 
 
 git add .
-git commit -m "some changes in prisma default relations in model"
+git commit -m "Admin authentication middleware added"
 git push origin master

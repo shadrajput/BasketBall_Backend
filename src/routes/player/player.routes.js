@@ -1,11 +1,42 @@
 const express = require('express');
-const { playerRegistration,allPlayers,updatePlayerDetails,onePlayerDetails,deletePlayerDetails } = require('./player.controller')
+const {
+  // isAuthenticatedUser,
+  // isAuthPlayer
+} = require("../../middlewares/auth");
+const {
+  playerRegistration,
+  allPlayers,
+  updatePlayerDetails,
+  onePlayerDetailsbyId,
+  onePlayerDetailsbyNumber,
+  deletePlayerDetails
+} = require('./player.controller')
 const router = express.Router()
 
-router.post('/registration', playerRegistration)
-router.get('/', allPlayers)
-router.get('/:player_id', onePlayerDetails)
-router.put('/update/:player_id', updatePlayerDetails)
-router.delete('/delete/:player_id', deletePlayerDetails)
+router.post('/registration',
+  // isAuthenticatedUser,
+  playerRegistration)
+router.get('/',
+  // isAuthenticatedUser,
+  allPlayers)
 
-module.exports = router
+router.get('/details/:player_id',
+  // isAuthenticatedUser,
+  onePlayerDetailsbyId)
+
+router.get('/details/:number',
+  // isAuthenticatedUser,
+  onePlayerDetailsbyNumber)
+
+router.put("/update/:player_id",
+  // isAuthenticatedUser,
+  // isAuthPlayer,
+  updatePlayerDetails
+);
+
+router.delete('/delete/:player_id',
+  // isAuthenticatedUser,
+  // isAuthPlayer,
+  deletePlayerDetails)
+
+module.exports = router;

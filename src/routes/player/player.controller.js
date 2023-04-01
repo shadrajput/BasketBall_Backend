@@ -104,26 +104,67 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
 
-    const AllPlayer = await prisma.players.findMany()
+    const all_players = await prisma.players.findMany({
+        include: {
+            player_statistics: true,
+            users: true
+        },
+    })
 
     res.status(200).json({
-        AllPlayer: AllPlayer,
+        all_players: all_players,
         success: true,
-        message: "All Player"
+        message: "all_players"
     })
 })
 
 
 // ----------------------------------------------------
-// -------------- one_Player_Details ------------------
+// ------------ one_Player_Details_BY_Number --------------
 // ----------------------------------------------------
-const onePlayerDetails = catchAsyncErrors(async (req, res, next) => {
+const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
 
     const { player_id } = req.params
 
-    const onePlayerDetails = await prisma.players.findFirst({
+    const SinglePlayerDetails = await prisma.players.findFirst({
         where: {
             id: Number(player_id)
+        },
+        include: {
+            player_statistics: true,
+            users: true,
+            team_players : {
+                include:{
+                    teams:true
+                }
+            },
+            match_players : {
+                include : {
+                    matches : true
+                }
+            }
+        },
+    })
+
+    res.status(200).json({
+        SinglePlayerDetails: SinglePlayerDetails,
+        success: true,
+        message: "Single player details"
+    })
+
+})
+
+
+// ----------------------------------------------------
+// ------------ one_Player_Details_BY_ID --------------
+// ----------------------------------------------------
+const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
+
+    const { number } = req.params
+
+    const SinglePlayerDetails = await prisma.players.findFirst({
+        where: {
+            alternate_mobile: number
         },
         include: {
             player_statistics: true,
@@ -132,10 +173,11 @@ const onePlayerDetails = catchAsyncErrors(async (req, res, next) => {
     })
 
     res.status(200).json({
-        onePlayerDetails: onePlayerDetails,
+        SinglePlayerDetails: SinglePlayerDetails,
         success: true,
-        message: "One Player Details"
+        message: "Single player details"
     })
+
 })
 
 
@@ -143,37 +185,114 @@ const onePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 // ------------------ Update_Player -------------------
 // ----------------------------------------------------
 const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
-    const { player_id } = req.params
 
-    const { first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about } = req.body
+    const form = new formidable.IncomingForm();
 
-    const updatePlayerDetails = await prisma.players.update({
-        where: {
-            id: Number(player_id)
-        },
-        data: {
-            first_name,
-            middle_name,
-            last_name,
-            alternate_mobile,
-            gender,
-            height,
-            weight,
-            pincode,
-            city,
-            state,
-            country,
-            playing_position,
-            jersey_no,
-            about
+    form.parse(req, async function (err, fields, files) {
+        if (err) {
+            return res.status(500).json({ success: false, message: err.message });
         }
-    })
 
-    res.status(200).json({
-        updatePlayerDetails: updatePlayerDetails,
-        success: true,
-        message: "Player details updated"
-    })
+        let photo = "";
+        const myPromise = new Promise(async (resolve, reject) => {
+            //Searching and deleting old photo from imagekit
+            if (
+                fields.old_photo_url != fields.photo_name
+            ) {
+                //Searching old photo
+                const old_photo_name = fields.old_photo_url.split('/')[5];
+                let old_photo_fileId = '';
+                imagekit.listFiles({
+                    searchQuery: `'name'="${old_photo_name}"`
+                }, function (error, result) {
+                    if (error) {
+                        return next(new ErrorHandler("Failed to update photo", 500));
+                    }
+                    if (result && result.length > 0) {
+                        old_photo_fileId = result[0].fileId
+
+                        //Deleting old photo
+                        imagekit.deleteFile(old_photo_fileId, function (error, result) {
+                            if (error) {
+                                return next(new ErrorHandler("Failed to update photo", 500));
+                            }
+                        });
+                    }
+                });
+            }
+            if (files.photo.originalFilename != "" && files.photo.size != 0) {
+                const ext = files.photo.mimetype.split("/")[1].trim();
+
+                if (files.photo.size >= 2000000) {
+                    // 2000000(bytes) = 2MB
+                    return next(new ErrorHandler('Photo size should be less than 2MB', 400));
+                }
+                if (ext != "png" && ext != "jpg" && ext != "jpeg") {
+                    return next(new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400));
+                }
+
+                var oldPath = files.photo.filepath;
+                var fileName = Date.now() + "_" + files.photo.originalFilename;
+
+                fs.readFile(oldPath, function (err, data) {
+                    if (err) {
+                        return next(new ErrorHandler(error.message, 500));
+                    }
+                    imagekit.upload({
+                        file: data,
+                        fileName: fileName,
+                        overwriteFile: true,
+                        folder: '/player_images'
+                    }, function (error, result) {
+                        if (error) {
+                            return next(new ErrorHandler(error.message, 500));
+                        }
+                        photo = result.url
+                        resolve();
+                    });
+                });
+            }
+            else {
+                resolve()
+            }
+        })
+
+        myPromise.then(async () => {
+            const { player_id } = req.params
+
+            const { first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about } = fields
+
+            const updatePlayerDetails = await prisma.players.update({
+                where: {
+                    id: Number(player_id)
+                },
+                data: {
+                    first_name,
+                    middle_name,
+                    last_name,
+                    alternate_mobile,
+                    gender,
+                    height: Number(height),
+                    weight: Number(weight),
+                    pincode: Number(pincode),
+                    city,
+                    state,
+                    country,
+                    playing_position,
+                    jersey_no: Number(jersey_no),
+                    about
+                }
+            })
+
+            res.status(200).json({
+                updatePlayerDetails: updatePlayerDetails,
+                success: true,
+                message: "Player details updated"
+            })
+        })
+
+    });
+
 })
 
 
@@ -202,7 +321,8 @@ const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 module.exports = {
     playerRegistration,
     allPlayers,
-    onePlayerDetails,
+    onePlayerDetailsbyId,
+    onePlayerDetailsbyNumber,
     updatePlayerDetails,
     deletePlayerDetails
 }
