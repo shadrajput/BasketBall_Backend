@@ -137,6 +137,11 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
                 include:{
                     teams:true
                 }
+            },
+            match_players : {
+                include : {
+                    matches : true
+                }
             }
         },
     })
