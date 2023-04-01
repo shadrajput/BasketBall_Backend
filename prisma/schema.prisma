@@ -65,6 +65,42 @@ model player_statistics {
   players        players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
 }
 
+model teams {
+  id                  Int                @id(map: "Teams_pkey") @default(autoincrement())
+  logo                String?
+  team_name           String
+  coach_name          String?
+  coach_mobile        String?
+  asst_coach_name     String?
+  asst_coach_mobile   String?
+  about_team          String?
+  matches_played      Int                @default(0)
+  matches_won         Int                @default(0)
+  matches_lost        Int                @default(0)
+  is_details_editable Boolean?           @default(true)
+  user_id             Int
+  created_at          DateTime?          @default(now()) @db.Time(6)
+  match_players       match_players[]
+  match_quarters      match_quarters[]
+  match_score         match_score[]
+  team_1_matches      matches[]          @relation("matches_team_1_idToteams")
+  team_2_matches      matches[]          @relation("matches_team_2_idToteams")
+  match_won_by        matches[]          @relation("matches_won_by_team_idToteams")
+  team_players        team_players[]
+  users               users              @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_table")
+  tournament_teams    tournament_teams[]
+}
+
+model team_players {
+  id               Int      @id(map: "Team_players_pkey") @default(autoincrement())
+  team_id          Int
+  player_id        Int
+  is_playing       Boolean
+  playing_position String
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  players          players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "player_table")
+  teams            teams    @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
+}
 
 model tournaments {
   id                   Int                   @id @default(autoincrement())

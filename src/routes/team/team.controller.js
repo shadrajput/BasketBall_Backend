@@ -1,7 +1,16 @@
-const { uploadImage, deleteImage } = require("../../helper/imageUpload");
+const {
+  uploadImage,
+  deleteImage,
+  DefaultteamImage,
+} = require("../../helper/imageUpload");
 const { PrismaClient } = require("@prisma/client");
 const parseFormData = require("../../helper/parseForm");
-const { createTeam, createTeamPlayers } = require("./team.model");
+const {
+  createTeam,
+  createTeamPlayers,
+  getTeamDetail,
+  updateTeam,
+} = require("./team.model");
 
 const prisma = new PrismaClient();
 
@@ -22,8 +31,8 @@ async function httpTeamRegister(req, res, next) {
     if (existingTeam) {
       throw new Error("Please change the Team name");
     }
-
-    const logo = await uploadLogo(formData);
+    let logo = "";
+    logo = await uploadLogo(formData, logo);
     const team = await createTeam(teamData, logo);
     const teamPlayers = await createTeamPlayers(teamData.PlayerList, team.id);
 
@@ -37,19 +46,22 @@ async function httpUpdateTeam(req, res, next) {
   try {
     const formData = await parseFormData(req);
     const teamData = JSON.parse(formData?.fields?.data);
-    let logo = "";
-    if (teamData.oldImage != teamData.logo) {
-      await deleteImage(teamData?.oldImage);
-    } else {
-      logo = await uploadLogo(formData);
-    }
+    let logo = teamData?.TeamInfo?.logo ? teamData?.TeamInfo?.logo : "";
+    logo = await uploadLogo(formData, logo);
+    console.log("logo ", logo);
+    const uteam = await updateTeam({
+      id: teamData?.TeamInfo?.id,
+      data: teamData?.TeamInfo,
+      logo: logo,
+    });
+
+    return res.status(200).json({ success: true, team: uteam });
   } catch (error) {
     next(error);
   }
 }
 
 async function httpGetAllTeams(req, res, next) {
-  console.log(req.params);
   let { page, TeamName } = req.params;
   TeamName = TeamName == "search" ? "" : TeamName;
   try {
@@ -96,13 +108,18 @@ async function httpSearchTeamByName(req, res, next) {
   }
 }
 
-async function uploadLogo(formData) {
+async function uploadLogo(formData, logo) {
   const { files } = formData;
   if (!files || !files.team_logo) {
-    return "";
+    console.log("empty ke andar to gye");
+    return logo.length <= 2 ? DefaultteamImage : logo;
   }
 
   try {
+    if (logo && logo != DefaultteamImage) {
+      console.log("yaha to ja raha he");
+      await deleteImage(logo);
+    }
     return await uploadImage(files.team_logo, "team_images");
   } catch (error) {
     throw new Error(error.message);
@@ -111,22 +128,8 @@ async function uploadLogo(formData) {
 
 async function httpGetTeamDetailById(req, res, next) {
   const team_id = req.params?.id;
-  console.log(team_id);
   try {
-    const team = await prisma.teams.findUnique({
-      where: {
-        id: Number(team_id),
-      },
-      include: {
-        team_players: {
-          include: {
-            players: true,
-          },
-        },
-        tournament_teams: true,
-        users: true,
-      },
-    });
+    const team = await getTeamDetail(team_id);
 
     if (!team) {
       return res.status(400).json({ success: true, message: "Team Not found" });
@@ -142,5 +145,6 @@ module.exports = {
   httpTeamRegister,
   httpGetTeamDetailById,
   httpSearchTeamByName,
+  httpUpdateTeam,
   httpGetAllTeams,
 };

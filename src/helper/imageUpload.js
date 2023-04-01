@@ -2,6 +2,9 @@ const ImageKit = require("imagekit");
 const fs = require("fs");
 const ErrorHandler = require("../utils/ErrorHandler");
 
+const DefaultteamImage =
+  "https://ik.imagekit.io/cpxhw6dfc/team_images/1680341770350_basketball_a1D05Joig.png";
+
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
@@ -63,6 +66,7 @@ async function deleteImage(name) {
 
   try {
     const imageID = await searchImage(image);
+    console.log(imageID);
     if (imageID) {
       await imagekit.deleteFile(imageID);
     }
@@ -71,4 +75,4 @@ async function deleteImage(name) {
   }
 }
 
-module.exports = { uploadImage, deleteImage };
+module.exports = { uploadImage, deleteImage, DefaultteamImage };
