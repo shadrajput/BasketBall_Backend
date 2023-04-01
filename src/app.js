@@ -12,8 +12,9 @@ const matchRouter = require('./routes/match/match.routes')
 const errorMiddleware = require("./middlewares/errors");
 const cors = require("cors");
 const path = require("path");
+const teamRouter = require("./routes/team/team.routes");
 const app = express();
-  
+
 app.use(express.json());
 app.use(cors());
 app.use(express.static("public/images"));
@@ -29,6 +30,7 @@ app.use('/scoreboard', scoreboardRouter);
 app.use('/match', matchRouter);
 app.use("/imagekit", imagekitAuthRouter);
 app.use("/mail", mailRouter);
+app.use("/team", teamRouter);
 
 //Middleware for errors
 app.use(errorMiddleware)
