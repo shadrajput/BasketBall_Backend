@@ -24,19 +24,22 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
         if (err) {
             return res.status(500).json({ success: false, message: err.message });
         }
-
+        console.log(files)
         let photo = "";
-
+        console.log(1)
         const myPromise = new Promise(async (resolve, reject) => {
             if (files.photo.originalFilename != "" && files.photo.size != 0) {
                 const ext = files.photo.mimetype.split("/")[1].trim();
-
                 if (files.photo.size >= 2000000) {
                     // 2000000(bytes) = 2MB
-                    return next(new ErrorHandler('Photo size should be less than 2MB', 400));
+                    return next(
+                        new ErrorHandler("Photo size should be less than 2MB", 400)
+                    );
                 }
                 if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-                    return next(new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400));
+                    return next(
+                        new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400)
+                    );
                 }
 
                 var oldPath = files.photo.filepath;
@@ -44,30 +47,33 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
                 fs.readFile(oldPath, function (err, data) {
                     if (err) {
-                        return next(new ErrorHandler(error.message, 500));
+                        return next(new ErrorHandler(err.message, 500));
                     }
-                    imagekit.upload({
-                        file: data,
-                        fileName: fileName,
-                        overwriteFile: true,
-                        folder: '/player_images'
-                    }, function (error, result) {
-                        if (error) {
-                            return next(new ErrorHandler(error.message, 500));
+                    imagekit.upload(
+                        {
+                            file: data,
+                            fileName: fileName,
+                            overwriteFile: true,
+                            folder: "/tournament_images",
+                        },
+                        function (error, result) {
+                            if (error) {
+                                return next(new ErrorHandler(error.message, 500));
+                            }
+                            photo = result.url;
+                            resolve();
                         }
-                        photo = result.url
-                        resolve();
-                    });
+                    );
                 });
+            } else {
+                resolve();
             }
-            else {
-                resolve()
-            }
-        })
+        });
 
         myPromise.then(async () => {
 
             let { user_id = 1, first_name, middle_name, last_name, alternate_mobile, gender, height, weight, pincode, city, state, country, playing_position, jersey_no, about, date_of_birth } = fields
+            console.log(fields)
             await prisma.players.create({
                 data: {
                     user_id: user_id,
@@ -98,24 +104,26 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 })
 
 
-
 // ----------------------------------------------------
 // -------------------- all_Player --------------------
 // ----------------------------------------------------
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
-
-    const all_players = await prisma.players.findMany({
-        include: {
-            player_statistics: true,
-            users: true
-        },
-    })
-
-    res.status(200).json({
-        all_players: all_players,
-        success: true,
-        message: "all_players"
-    })
+    try {
+        const all_players = await prisma.players.findMany({
+            include: {
+                player_statistics: true,
+                users: true,
+                team_players: {
+                    include: {
+                        teams: true
+                    }
+                },
+            },
+        })
+        return res.status(200).json({ success: true, data: all_players });
+    } catch (error) {
+        next(error);
+    }
 })
 
 
@@ -133,14 +141,14 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
         include: {
             player_statistics: true,
             users: true,
-            team_players : {
-                include:{
-                    teams:true
+            team_players: {
+                include: {
+                    teams: true
                 }
             },
-            match_players : {
-                include : {
-                    matches : true
+            match_players: {
+                include: {
+                    matches: true
                 }
             }
         },
