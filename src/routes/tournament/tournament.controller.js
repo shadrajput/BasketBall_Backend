@@ -272,7 +272,11 @@ const tournamentDetails = catchAsyncErrors(async (req, res, next) => {
     include: {
       tournament_sponsors: true,
       tournament_referees: true,
-      tournament_teams: true,
+      tournament_teams: {
+        include: {
+          teams: true
+        }
+      },
       matches: true,
       gallery: true,
       users: true,
@@ -329,6 +333,7 @@ const startTournament = catchAsyncErrors(async (req, res, next) => {
     data: {
       status: 2, //2 == live
       is_details_editable: false,
+      is_registration_open: false
     },
   });
 
@@ -363,6 +368,9 @@ const teamsRequests = catchAsyncErrors(async (req, res, next) => {
       tournament_id,
       is_selected: 2, //pending
     },
+    include:{
+      teams: true,
+    }
   });
 
   res.status(200).json({ success: true, teams });
