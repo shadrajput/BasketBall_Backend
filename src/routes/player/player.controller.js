@@ -88,9 +88,6 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
           jersey_no: Number(gameInfo.JerseyNumber),
           about: gameInfo.Experience,
           date_of_birth: new Date(basicInfo.dob),
-          city: "ahmedabad",
-          state: "gujarat",
-          country: "india"
         },
       });
 
