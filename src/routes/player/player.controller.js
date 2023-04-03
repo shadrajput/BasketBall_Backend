@@ -24,7 +24,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
     }
     const playerData = JSON.parse(fields?.data);
     const { basicInfo, gameInfo } = playerData.PlayerInfo;
-
+    console.log(fields)
     let photo = "";
     const myPromise = new Promise(async (resolve, reject) => {
       if (files.photo) {
