@@ -24,7 +24,7 @@ router.get('/details/:player_id',
   // isAuthenticatedUser,
   onePlayerDetailsbyId)
 
-router.get('/details/:number',
+router.get('/search/:number',
   // isAuthenticatedUser,
   onePlayerDetailsbyNumber)
 

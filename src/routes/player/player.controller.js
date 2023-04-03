@@ -84,6 +84,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
           first_name: basicInfo.firstName,
           middle_name: basicInfo.middleName,
           last_name: basicInfo.lastName,
+          mobile: '1234567890',
           alternate_mobile: basicInfo.alternativeNo,
           gender: basicInfo.gender,
           height: Number(gameInfo.height),
