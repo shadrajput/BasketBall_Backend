@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const {
   // isAuthenticatedUser,
   // isAuthPlayer
@@ -9,34 +9,45 @@ const {
   updatePlayerDetails,
   onePlayerDetailsbyId,
   onePlayerDetailsbyNumber,
-  deletePlayerDetails
-} = require('./player.controller')
-const router = express.Router()
+  deletePlayerDetails,
+} = require("./player.controller");
+const router = express.Router();
 
-router.post('/registration',
+router.post(
+  "/registration",
   // isAuthenticatedUser,
-  playerRegistration)
-router.get('/',
+  playerRegistration
+);
+router.get(
+  "/",
   // isAuthenticatedUser,
-  allPlayers)
+  allPlayers
+);
 
-router.get('/details/:player_id',
+router.get(
+  "/details/:player_id",
   // isAuthenticatedUser,
-  onePlayerDetailsbyId)
+  onePlayerDetailsbyId
+);
 
-router.get('/search/:number',
+router.get(
+  "/search/:number",
   // isAuthenticatedUser,
-  onePlayerDetailsbyNumber)
+  onePlayerDetailsbyNumber
+);
 
-router.put("/update/:player_id",
+router.put(
+  "/update/:player_id",
   // isAuthenticatedUser,
   // isAuthPlayer,
   updatePlayerDetails
 );
 
-router.delete('/delete/:player_id',
+router.delete(
+  "/delete/:player_id",
   // isAuthenticatedUser,
   // isAuthPlayer,
-  deletePlayerDetails)
+  deletePlayerDetails
+);
 
 module.exports = router;

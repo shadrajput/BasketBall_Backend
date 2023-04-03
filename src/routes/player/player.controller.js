@@ -17,20 +17,15 @@ const imagekit = new ImageKit({
 // ------------------ Registration --------------------
 // ----------------------------------------------------
 const playerRegistration = catchAsyncErrors(async (req, res, next) => {
-  console.log("aa raha he");
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
     if (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
-    console.log("fields", fields);
     const playerData = JSON.parse(fields?.data);
     const { basicInfo, gameInfo } = playerData.PlayerInfo;
-    console.log("game Info", gameInfo);
 
-    console.log(files);
     let photo = "";
-
     const myPromise = new Promise(async (resolve, reject) => {
       if (files.photo) {
         const ext = files.photo.mimetype.split("/")[1].trim();
@@ -75,9 +70,9 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       }
     });
 
-    console.log("yaha tak pahoch gaya");
+    console.log(gameInfo);
     myPromise.then(async () => {
-      await prisma.players.create({
+      const data = await prisma.players.create({
         data: {
           user_id: 1,
           photo: photo,
@@ -90,6 +85,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
           height: Number(gameInfo.height),
           weight: Number(gameInfo.weight),
           pincode: basicInfo.pincode,
+          mobile: basicInfo.mobileNo,
           playing_position: gameInfo.playerPosition,
           jersey_no: Number(gameInfo.JerseyNumber),
           about: gameInfo.Experience,
@@ -97,9 +93,11 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
         },
       });
 
-      res
-        .status(201)
-        .json({ success: true, message: "Registration successfull." });
+      res.status(201).json({
+        data: data,
+        success: true,
+        message: "Registration successfull.",
+      });
     });
   });
 });
@@ -108,18 +106,22 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 // -------------------- all_Player --------------------
 // ----------------------------------------------------
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
-  const all_players = await prisma.players.findMany({
-    include: {
-      player_statistics: true,
-      users: true,
-    },
-  });
-
-  res.status(200).json({
-    all_players: all_players,
-    success: true,
-    message: "all_players",
-  });
+  try {
+    const all_players = await prisma.players.findMany({
+      include: {
+        player_statistics: true,
+        users: true,
+        team_players: {
+          include: {
+            teams: true,
+          },
+        },
+      },
+    });
+    return res.status(200).json({ success: true, data: all_players });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ----------------------------------------------------
@@ -159,22 +161,19 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
 // ------------ one_Player_Details_BY_ID --------------
 // ----------------------------------------------------
 const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
-  const { number } = req.params;
-
+  let { number } = req.params;
+  number = number.length < 4 ? "" : number;
+  console.log(number);
   const SinglePlayerDetails = await prisma.players.findFirst({
     where: {
-      alternate_mobile: number,
-    },
-    include: {
-      player_statistics: true,
-      users: true,
+      mobile: number,
     },
   });
 
+  console.log(SinglePlayerDetails);
   res.status(200).json({
-    SinglePlayerDetails: SinglePlayerDetails,
+    data: SinglePlayerDetails,
     success: true,
-    message: "Single player details",
   });
 });
 

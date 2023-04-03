@@ -16,14 +16,6 @@ const imagekit = new ImageKit({
 const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
-    // console.log(fields);
-    const sponsors = JSON.parse(fields.sponsors)
-
-    let sponsors_logo = []; 
-    for (let i=0; i<sponsors.length; i++) {
-      sponsors_logo.push(files[`sponsors_logo${i}`])
-    } 
-
     if (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
@@ -51,16 +43,14 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Please change the tournament name"));
     }
 
-    //Uploading tournament logo
     let logo = "";
-
     const myPromise = new Promise(async (resolve, reject) => {
 
       if (files.logo && files.logo.originalFilename != "" && files.logo.size != 0) {
         const ext = files.logo.mimetype.split("/")[1].trim();
-
-        if (files.logo.size >= 2097152) {
-          // 2097152(bytes) = 2MB
+        console.log(1)
+        if (files.logo.size >= 2000000) {
+          // 2000000(bytes) = 2MB
           return next(
             new ErrorHandler("Photo size should be less than 2MB", 400)
           );
@@ -90,58 +80,18 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
                 return next(new ErrorHandler(error.message, 500));
               }
               logo = result.url;
+              resolve();
             }
           );
         });
-      } 
-
-      //uploading sponsors logo
-      for(let i=0; i<sponsors_logo.length; i++){
-        if(sponsors_logo[i].originalFilename != '' && sponsors_logo[i].size != 0){
-          const ext = sponsors_logo[i].mimetype.split("/")[1].trim();
-
-          if (sponsors_logo[i].size >= 2097152) {
-            // 2097152(bytes) = 2MB
-            return next(
-              new ErrorHandler("Sponsor logo size should be less than 2MB", 400)
-            );
-          }
-          if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-            return next(
-              new ErrorHandler("Only JPG, JPEG or PNG sponsor logos are allowed", 400)
-            );
-          }
-
-          var oldPath = sponsors_logo[i].filepath;
-          var fileName = Date.now() + "_" + sponsors_logo[i].originalFilename;
-
-          const data = fs.readFileSync(oldPath);
-          if (!data) {
-            return next(new ErrorHandler('Something went wrong', 500));
-          }
-
-          const result = await imagekit.upload({
-            file: data,
-            fileName: fileName,
-            overwriteFile: true,
-            folder: "/sponsors_images",
-          });
-
-          if (!result) {
-            return next(new ErrorHandler('Something went wrong', 500));
-          }
-
-          let imageData = [result];
-          imageData.map((item)=>{
-            sponsors[i].logo = item.url
-          })
-        }
+      } else {
+        resolve();
       }
-      resolve()
     });
 
     myPromise.then(async () => {
       let {
+        user_id = 1,
         tournament_name,
         address,
         start_date,
@@ -150,24 +100,16 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
         age_categories,
         level,
         prize,
-        about,
-        referees
       } = fields;
 
       start_date = new Date(start_date);
       end_date = new Date(end_date);
       gender_types = JSON.parse(gender_types);
       age_categories = JSON.parse(age_categories);
-      //removing underscore from value
-      age_categories.map((item, i)=>{
-        const age = item.split('_')
-        age_categories[i] = `${age[0]} ${age[1]}}`
-      })
-      referees = JSON.parse(referees);
 
-      const tournament_details = await prisma.tournaments.create({
+      await prisma.tournaments.create({
         data: {
-          user_id: 1,
+          user_id: Number(user_id),
           logo,
           tournament_name,
           address,
@@ -177,31 +119,8 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
           age_categories,
           level,
           prize,
-          about
         },
       });
-
-      //Adding referees
-      referees.map(async (item)=>{
-        await prisma.tournament_referees.create({
-          data:{
-            tournament_id: tournament_details.id,
-            name: item.name,
-            mobile: item.mobile,
-          }
-        })
-      })
-
-      //Adding sponsors
-      sponsors.map(async(item)=>{
-        await prisma.tournament_sponsors.create({
-          data:{
-            tournament_id: tournament_details.id,
-            logo: item.logo,
-            title: item.name
-          }
-        })
-      })
 
       res.status(201).json({
         success: true,
@@ -209,7 +128,6 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
           "Registration successfull. Soon Admin will verify your tournament.",
       });
     });
-
   });
 });
 
@@ -221,10 +139,11 @@ const allTournaments = catchAsyncErrors(async (req, res, next) => {
     include: {
       users: true,
     },
-    orderBy: {
-      created_at: "desc",
-    },
   });
+
+  if (all_tournaments.length == 0) {
+    return next(new ErrorHandler("No tournaments found"));
+  }
 
   res.status(200).json({ success: true, all_tournaments });
 });
@@ -318,7 +237,7 @@ const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
         start_date,
         end_date,
         gender_types,
-        age_categories, 
+        age_categories,
         level,
         prize,
       } = fields;
@@ -369,7 +288,7 @@ const tournamentDetails = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Tournament not found", 404));
   }
 
-  res.status(200).json({ success: true, tournamentDetails});
+  res.status(200).json({ success: true, tournamentDetails });
 });
 
 const startRegistration = catchAsyncErrors(async (req, res, next) => {
@@ -480,15 +399,13 @@ const acceptTeamRequest = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  res
-    .status(200)
-    .json({ success: true, message: "Team selected successfully" });
+  res.status(200).json({ success: true, message: 'Team selected successfully' });
 });
 
 const rejectTeamRequest = catchAsyncErrors(async (req, res, next) => {
   const tournament_id = Number(req.params.tournament_id);
   const team_id = Number(req.body.team_id);
-  const reject_reason = req.body.reject_reason;
+  const reject_reason = req.body.reject_reason
 
   const tournament_team = await prisma.tournament_teams.findFirst({
     where: {
@@ -507,9 +424,7 @@ const rejectTeamRequest = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  res
-    .status(200)
-    .json({ success: true, message: "Team rejected successfully" });
+  res.status(200).json({ success: true, message: 'Team rejected successfully' });
 });
 
 const disqualifyTeam = catchAsyncErrors(async (req, res, next) => {
@@ -571,13 +486,10 @@ const createPools = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  if (all_teams % teams_per_group != 0) {
-    return new ErrorHandler(
-      `Can't make pools with ${teams_per_group} teams per group`,
-      400
-    );
+  if (all_teams%teams_per_group != 0){
+    return new ErrorHandler(`Can't make pools with ${teams_per_group} teams per group`, 400);
   }
-
+  
   //shuffling the teams in an array
   for (let i = 0; i < 10; ) {
     const random_no_1 = Match.floor(Math.random() * 10);

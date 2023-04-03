@@ -10,6 +10,7 @@ const {
   createTeamPlayers,
   getTeamDetail,
   updateTeam,
+  deleteTeamPlayer,
 } = require("./team.model");
 
 const prisma = new PrismaClient();
@@ -19,6 +20,8 @@ async function httpTeamRegister(req, res, next) {
     const formData = await parseFormData(req);
     const teamData = JSON.parse(formData?.fields?.data);
     const teamName = teamData.TeamInfo.team_name;
+    const captain = teamData.captain;
+    console.log(teamData);
     const existingTeam = await prisma.teams.findFirst({
       where: {
         team_name: {
@@ -33,7 +36,7 @@ async function httpTeamRegister(req, res, next) {
     }
     let logo = "";
     logo = await uploadLogo(formData, logo);
-    const team = await createTeam(teamData, logo);
+    const team = await createTeam(teamData, logo, captain);
     const teamPlayers = await createTeamPlayers(teamData.PlayerList, team.id);
 
     return res.status(201).json({ success: true, team, players: teamPlayers });
@@ -46,6 +49,8 @@ async function httpUpdateTeam(req, res, next) {
   try {
     const formData = await parseFormData(req);
     const teamData = JSON.parse(formData?.fields?.data);
+    const captain = teamData.captain;
+
     let logo = teamData?.TeamInfo?.logo ? teamData?.TeamInfo?.logo : "";
     logo = await uploadLogo(formData, logo);
     console.log("logo ", logo);
@@ -53,9 +58,16 @@ async function httpUpdateTeam(req, res, next) {
       id: teamData?.TeamInfo?.id,
       data: teamData?.TeamInfo,
       logo: logo,
+      captain: captain,
     });
 
-    return res.status(200).json({ success: true, team: uteam });
+    const deletedPlayer = await deleteTeamPlayer(uteam?.id);
+
+    const teamPlayers = await createTeamPlayers(teamData.PlayerList, uteam.id);
+
+    return res
+      .status(200)
+      .json({ success: true, team: uteam, players: teamPlayers });
   } catch (error) {
     next(error);
   }
