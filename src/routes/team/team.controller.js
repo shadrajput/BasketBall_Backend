@@ -19,6 +19,8 @@ async function httpTeamRegister(req, res, next) {
     const formData = await parseFormData(req);
     const teamData = JSON.parse(formData?.fields?.data);
     const teamName = teamData.TeamInfo.team_name;
+    const captain = teamData.captain;
+    console.log(teamData);
     const existingTeam = await prisma.teams.findFirst({
       where: {
         team_name: {
@@ -33,7 +35,7 @@ async function httpTeamRegister(req, res, next) {
     }
     let logo = "";
     logo = await uploadLogo(formData, logo);
-    const team = await createTeam(teamData, logo);
+    const team = await createTeam(teamData, logo, captain);
     const teamPlayers = await createTeamPlayers(teamData.PlayerList, team.id);
 
     return res.status(201).json({ success: true, team, players: teamPlayers });
