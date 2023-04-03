@@ -70,8 +70,9 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       }
     });
 
+    console.log(gameInfo);
     myPromise.then(async () => {
-    const data = await prisma.players.create({
+      const data = await prisma.players.create({
         data: {
           user_id: 1,
           photo: photo,
@@ -83,23 +84,19 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
           height: Number(gameInfo.height),
           weight: Number(gameInfo.weight),
           pincode: basicInfo.pincode,
-          mobile: "9876543210",
+          mobile: basicInfo.mobileNo,
           playing_position: gameInfo.playerPosition,
           jersey_no: Number(gameInfo.JerseyNumber),
           about: gameInfo.Experience,
           date_of_birth: new Date(basicInfo.dob),
-          city: "ahmedabad",
-          state: "gujarat",
-          country: "india"
         },
       });
 
-      res.status(201)
-        .json({
-          data : data,
-          success: true,
-          message: "Registration successfull."
-        });
+      res.status(201).json({
+        data: data,
+        success: true,
+        message: "Registration successfull.",
+      });
     });
   });
 });
@@ -115,17 +112,16 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
         users: true,
         team_players: {
           include: {
-            teams: true
-          }
+            teams: true,
+          },
         },
       },
-    })
+    });
     return res.status(200).json({ success: true, data: all_players });
   } catch (error) {
     next(error);
   }
-})
-
+});
 
 // ----------------------------------------------------
 // ------------ one_Player_Details_BY_Number --------------
