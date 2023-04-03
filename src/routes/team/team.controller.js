@@ -10,6 +10,7 @@ const {
   createTeamPlayers,
   getTeamDetail,
   updateTeam,
+  deleteTeamPlayer,
 } = require("./team.model");
 
 const prisma = new PrismaClient();
@@ -48,6 +49,8 @@ async function httpUpdateTeam(req, res, next) {
   try {
     const formData = await parseFormData(req);
     const teamData = JSON.parse(formData?.fields?.data);
+    const captain = teamData.captain;
+
     let logo = teamData?.TeamInfo?.logo ? teamData?.TeamInfo?.logo : "";
     logo = await uploadLogo(formData, logo);
     console.log("logo ", logo);
@@ -55,9 +58,16 @@ async function httpUpdateTeam(req, res, next) {
       id: teamData?.TeamInfo?.id,
       data: teamData?.TeamInfo,
       logo: logo,
+      captain: captain,
     });
 
-    return res.status(200).json({ success: true, team: uteam });
+    const deletedPlayer = await deleteTeamPlayer(uteam?.id);
+
+    const teamPlayers = await createTeamPlayers(teamData.PlayerList, uteam.id);
+
+    return res
+      .status(200)
+      .json({ success: true, team: uteam, players: teamPlayers });
   } catch (error) {
     next(error);
   }

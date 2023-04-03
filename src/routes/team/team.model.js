@@ -26,7 +26,16 @@ async function createTeam(teamData, logo, captain) {
   });
 }
 
-async function updateTeam({ id, data, logo }) {
+async function deleteTeamPlayer(teamID) {
+  return await prisma.team_players.deleteMany({
+    where: {
+      team_id: teamID,
+    },
+  });
+}
+
+async function updateTeam({ id, data, logo, captain }) {
+  console.log(captain);
   const {
     team_name,
     coach_name,
@@ -44,6 +53,7 @@ async function updateTeam({ id, data, logo }) {
       coach_mobile,
       asst_coach_mobile,
       asst_coach_name,
+      captain_id: 1,
     },
   });
 
@@ -112,4 +122,10 @@ async function createTeamPlayers(playerList, teamId) {
   );
 }
 
-module.exports = { createTeam, updateTeam, createTeamPlayers, getTeamDetail };
+module.exports = {
+  createTeam,
+  updateTeam,
+  createTeamPlayers,
+  getTeamDetail,
+  deleteTeamPlayer,
+};
