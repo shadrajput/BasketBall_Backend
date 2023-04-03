@@ -82,7 +82,8 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
           gender: basicInfo.gender,
           height: Number(gameInfo.height),
           weight: Number(gameInfo.weight),
-          pincode: Number(basicInfo.pincode),
+          pincode: basicInfo.pincode,
+          mobile: "9876543210",
           playing_position: gameInfo.playerPosition,
           jersey_no: Number(gameInfo.JerseyNumber),
           about: gameInfo.Experience,
@@ -163,22 +164,19 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
 // ------------ one_Player_Details_BY_ID --------------
 // ----------------------------------------------------
 const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
-  const { number } = req.params;
-
+  let { number } = req.params;
+  number = number.length < 4 ? "" : number;
+  console.log(number);
   const SinglePlayerDetails = await prisma.players.findFirst({
     where: {
-      alternate_mobile: number,
-    },
-    include: {
-      player_statistics: true,
-      users: true,
+      mobile: number,
     },
   });
 
+  console.log(SinglePlayerDetails);
   res.status(200).json({
-    SinglePlayerDetails: SinglePlayerDetails,
+    data: SinglePlayerDetails,
     success: true,
-    message: "Single player details",
   });
 });
 

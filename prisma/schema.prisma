@@ -33,6 +33,7 @@ model players {
   first_name        String
   middle_name       String
   last_name         String
+  mobile            String
   alternate_mobile  String
   gender            String
   height            Float
@@ -49,6 +50,7 @@ model players {
   player_statistics player_statistics[]
   users             users               @relation(fields: [user_id], references: [id], map: "Players_user_id_fkey")
   team_players      team_players[]
+  teams             teams[]
 }
 
 model player_statistics {
@@ -63,7 +65,7 @@ model player_statistics {
 }
 
 model teams {
-  id                  Int                @id(map: "Teams_pkey") @default(autoincrement())
+  id                  Int              @id(map: "Teams_pkey") @default(autoincrement())
   logo                String?
   team_name           String
   coach_name          String?
@@ -71,21 +73,24 @@ model teams {
   asst_coach_name     String?
   asst_coach_mobile   String?
   about_team          String?
-  matches_played      Int                @default(0)
-  matches_won         Int                @default(0)
-  matches_lost        Int                @default(0)
-  is_details_editable Boolean?           @default(true)
+  matches_played      Int              @default(0)
+  matches_won         Int              @default(0)
+  matches_lost        Int              @default(0)
+  is_details_editable Boolean?         @default(true)
   user_id             Int
-  created_at          DateTime?          @default(now()) @db.Time(6)
+  captain_id          Int
+  created_at          DateTime?        @default(now()) @db.Time(6)
   match_players       match_players[]
   match_quarters      match_quarters[]
   match_score         match_score[]
-  team_1_matches      matches[]          @relation("matches_team_1_idToteams")
-  team_2_matches      matches[]          @relation("matches_team_2_idToteams")
-  match_won_by        matches[]          @relation("matches_won_by_team_idToteams")
+  team_1_matches      matches[]        @relation("matches_team_1_idToteams")
+  team_2_matches      matches[]        @relation("matches_team_2_idToteams")
+  match_won_by        matches[]        @relation("matches_won_by_team_idToteams")
   team_players        team_players[]
-  users               users              @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_table")
-  tournament_teams    tournament_teams[]
+  users               users            @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_table")
+  captain             players          @relation(fields: [captain_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
+
+  tournament_teams tournament_teams[]
 }
 
 model team_players {
@@ -130,7 +135,7 @@ model tournament_referees {
   mobile        String
   tournament_id Int
   created_at    DateTime    @default(now()) @db.Timestamp(6)
-  tournaments   tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
+  tournaments   tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "player_table")
 }
 
 model tournament_sponsors {
