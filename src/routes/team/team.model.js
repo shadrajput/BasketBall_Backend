@@ -109,6 +109,7 @@ async function getTeamDetail(team_id) {
 }
 
 async function createTeamPlayers(playerList, teamId) {
+  console.log(playerList[0]);
   return Promise.all(
     playerList.map((player) =>
       prisma.team_players.create({

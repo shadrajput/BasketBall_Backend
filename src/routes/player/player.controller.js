@@ -169,7 +169,6 @@ const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  console.log(SinglePlayerDetails);
   res.status(200).json({
     data: SinglePlayerDetails,
     success: true,
