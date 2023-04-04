@@ -19,6 +19,7 @@ async function httpTeamRegister(req, res, next) {
   try {
     const formData = await parseFormData(req);
     const teamData = JSON.parse(formData?.fields?.data);
+    console.log(teamData)
     const teamName = teamData.TeamInfo.team_name;
     const captain = teamData.captain;
     console.log(teamData);
@@ -76,7 +77,6 @@ async function httpUpdateTeam(req, res, next) {
 async function httpGetAllTeams(req, res, next) {
   let { page, TeamName } = req.params;
   TeamName = TeamName == "search" ? "" : TeamName;
-  console.log(page , TeamName)
   try {
     const teams = await prisma.teams.findMany({
       orderBy: { matches_won: "desc" },

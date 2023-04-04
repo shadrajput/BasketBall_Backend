@@ -108,12 +108,10 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
   let { page, PlayerName } = req.params;
   PlayerName = PlayerName == "search" ? "" : PlayerName;
-  console.log(page , PlayerName)
   try {
     const all_players = await prisma.players.findMany({
-      // orderBy: { points: "desc" },
-      // skip: page * 10,
-      // take: 10,
+      skip: page * 10,
+      take: 10,
       where: {
         first_name: {
           contains: PlayerName == "" ? "" : PlayerName,
@@ -121,7 +119,9 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
         },
       },
       include: {
-        player_statistics: true,
+        player_statistics: {
+          orderBy: { points: "desc" }
+        },
         users: true,
         team_players: {
           include: {
@@ -142,31 +142,36 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
 const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
   const { player_id } = req.params;
 
-  const SinglePlayerDetails = await prisma.players.findFirst({
-    where: {
-      id: Number(player_id),
-    },
-    include: {
-      player_statistics: true,
-      users: true,
-      team_players: {
-        include: {
-          teams: true,
+  try {
+    const SinglePlayerDetails = await prisma.players.findFirst({
+      where: {
+        id: Number(player_id),
+      },
+      include: {
+        player_statistics: true,
+        users: true,
+        team_players: {
+          include: {
+            teams: true,
+          },
+        },
+        match_players: {
+          include: {
+            matches: true,
+          },
         },
       },
-      match_players: {
-        include: {
-          matches: true,
-        },
-      },
-    },
-  });
+    });
 
-  res.status(200).json({
-    SinglePlayerDetails: SinglePlayerDetails,
-    success: true,
-    message: "Single player details",
-  });
+    res.status(200).json({
+      SinglePlayerDetails: SinglePlayerDetails,
+      success: true,
+      message: "Single player details",
+    });
+  } catch (error) {
+    next(error)
+  }
+
 });
 
 // ----------------------------------------------------
@@ -175,150 +180,158 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
 const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
   let { number } = req.params;
   number = number.length < 4 ? "" : number;
-  console.log(number);
-  const SinglePlayerDetails = await prisma.players.findFirst({
-    where: {
-      mobile: number,
-    },
-  });
+  try {
+    const SinglePlayerDetails = await prisma.players.findFirst({
+      where: {
+        mobile: number,
+      },
+    });
 
-  console.log(SinglePlayerDetails);
-  res.status(200).json({
-    data: SinglePlayerDetails,
-    success: true,
-  });
+    res.status(200).json({
+      data: SinglePlayerDetails,
+      success: true,
+    });
+  } catch (error) {
+    next(error)
+  }
+
 });
 
 // ----------------------------------------------------
 // ------------------ Update_Player -------------------
 // ----------------------------------------------------
 const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
-  const form = new formidable.IncomingForm();
 
+  const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
     if (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
 
-    let photo = "";
-    const myPromise = new Promise(async (resolve, reject) => {
-      //Searching and deleting old photo from imagekit
-      if (fields.old_photo_url != fields.photo_name) {
-        //Searching old photo
-        const old_photo_name = fields.old_photo_url.split("/")[5];
-        let old_photo_fileId = "";
-        imagekit.listFiles(
-          {
-            searchQuery: `'name'="${old_photo_name}"`,
-          },
-          function (error, result) {
-            if (error) {
-              return next(new ErrorHandler("Failed to update photo", 500));
-            }
-            if (result && result.length > 0) {
-              old_photo_fileId = result[0].fileId;
-
-              //Deleting old photo
-              imagekit.deleteFile(old_photo_fileId, function (error, result) {
-                if (error) {
-                  return next(new ErrorHandler("Failed to update photo", 500));
-                }
-              });
-            }
-          }
-        );
-      }
-      if (files.photo.originalFilename != "" && files.photo.size != 0) {
-        const ext = files.photo.mimetype.split("/")[1].trim();
-
-        if (files.photo.size >= 2000000) {
-          // 2000000(bytes) = 2MB
-          return next(
-            new ErrorHandler("Photo size should be less than 2MB", 400)
-          );
-        }
-        if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-          return next(
-            new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400)
-          );
-        }
-
-        var oldPath = files.photo.filepath;
-        var fileName = Date.now() + "_" + files.photo.originalFilename;
-
-        fs.readFile(oldPath, function (err, data) {
-          if (err) {
-            return next(new ErrorHandler(error.message, 500));
-          }
-          imagekit.upload(
+    try {
+      let photo = "";
+      const myPromise = new Promise(async (resolve, reject) => {
+        //Searching and deleting old photo from imagekit
+        if (fields.old_photo_url != fields.photo_name) {
+          //Searching old photo
+          const old_photo_name = fields.old_photo_url.split("/")[5];
+          let old_photo_fileId = "";
+          imagekit.listFiles(
             {
-              file: data,
-              fileName: fileName,
-              overwriteFile: true,
-              folder: "/player_images",
+              searchQuery: `'name'="${old_photo_name}"`,
             },
             function (error, result) {
               if (error) {
-                return next(new ErrorHandler(error.message, 500));
+                return next(new ErrorHandler("Failed to update photo", 500));
               }
-              photo = result.url;
-              resolve();
+              if (result && result.length > 0) {
+                old_photo_fileId = result[0].fileId;
+
+                //Deleting old photo
+                imagekit.deleteFile(old_photo_fileId, function (error, result) {
+                  if (error) {
+                    return next(new ErrorHandler("Failed to update photo", 500));
+                  }
+                });
+              }
             }
           );
-        });
-      } else {
-        resolve();
-      }
-    });
+        }
+        if (files.photo.originalFilename != "" && files.photo.size != 0) {
+          const ext = files.photo.mimetype.split("/")[1].trim();
 
-    myPromise.then(async () => {
-      const { player_id } = req.params;
+          if (files.photo.size >= 2000000) {
+            // 2000000(bytes) = 2MB
+            return next(
+              new ErrorHandler("Photo size should be less than 2MB", 400)
+            );
+          }
+          if (ext != "png" && ext != "jpg" && ext != "jpeg") {
+            return next(
+              new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400)
+            );
+          }
 
-      const {
-        first_name,
-        middle_name,
-        last_name,
-        alternate_mobile,
-        gender,
-        height,
-        weight,
-        pincode,
-        city,
-        state,
-        country,
-        playing_position,
-        jersey_no,
-        about,
-      } = fields;
+          var oldPath = files.photo.filepath;
+          var fileName = Date.now() + "_" + files.photo.originalFilename;
 
-      const updatePlayerDetails = await prisma.players.update({
-        where: {
-          id: Number(player_id),
-        },
-        data: {
+          fs.readFile(oldPath, function (err, data) {
+            if (err) {
+              return next(new ErrorHandler(error.message, 500));
+            }
+            imagekit.upload(
+              {
+                file: data,
+                fileName: fileName,
+                overwriteFile: true,
+                folder: "/player_images",
+              },
+              function (error, result) {
+                if (error) {
+                  return next(new ErrorHandler(error.message, 500));
+                }
+                photo = result.url;
+                resolve();
+              }
+            );
+          });
+        } else {
+          resolve();
+        }
+      });
+
+      myPromise.then(async () => {
+        const { player_id } = req.params;
+
+        const {
           first_name,
           middle_name,
           last_name,
           alternate_mobile,
           gender,
-          height: Number(height),
-          weight: Number(weight),
-          pincode: Number(pincode),
+          height,
+          weight,
+          pincode,
           city,
           state,
           country,
           playing_position,
-          jersey_no: Number(jersey_no),
+          jersey_no,
           about,
-        },
+        } = fields;
+
+        const updatePlayerDetails = await prisma.players.update({
+          where: {
+            id: Number(player_id),
+          },
+          data: {
+            first_name,
+            middle_name,
+            last_name,
+            alternate_mobile,
+            gender,
+            height: Number(height),
+            weight: Number(weight),
+            pincode: Number(pincode),
+            city,
+            state,
+            country,
+            playing_position,
+            jersey_no: Number(jersey_no),
+            about,
+          },
+        });
+
+        res.status(200).json({
+          updatePlayerDetails: updatePlayerDetails,
+          success: true,
+          message: "Player details updated",
+        });
       });
 
-      res.status(200).json({
-        updatePlayerDetails: updatePlayerDetails,
-        success: true,
-        message: "Player details updated",
-      });
-    });
+    } catch (error) {
+      next(error)
+    }
   });
 });
 
@@ -327,17 +340,22 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
   const { player_id } = req.params;
-  const deletePlayerDetails = await prisma.players.delete({
-    where: {
-      id: Number(player_id),
-    },
-  });
+  try {
+    const deletePlayerDetails = await prisma.players.delete({
+      where: {
+        id: Number(player_id),
+      },
+    });
 
-  res.status(200).json({
-    deletePlayerDetails: deletePlayerDetails,
-    success: true,
-    message: "Player details deleted",
-  });
+    res.status(200).json({
+      deletePlayerDetails: deletePlayerDetails,
+      success: true,
+      message: "Player details deleted",
+    });
+  } catch (error) {
+    next(error)
+  }
+
 });
 
 module.exports = {
