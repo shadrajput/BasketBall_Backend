@@ -24,7 +24,7 @@ async function uploadImage(file, folder) {
       reject(new Error("Only JPG, JPEG or PNG logo is allowed"));
     }
 
-    const oldPath = file.filepath;
+  const oldPath = file.filepath;
     const fileName = `${Date.now()}_${file.originalFilename}`;
 
     fs.readFile(oldPath, (err, data) => {
@@ -44,7 +44,7 @@ async function uploadImage(file, folder) {
             reject(error);
           }
 
-          resolve(result.url);
+          resolve(result?.url);
         }
       );
     });

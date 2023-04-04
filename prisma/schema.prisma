@@ -116,11 +116,11 @@ model tournaments {
   status               Int                   @default(0)
   is_approved          Boolean               @default(false)
   prize                String?
-  about                String?
   is_registration_open Boolean               @default(false)
   is_details_editable  Boolean               @default(true)
   user_id              Int
   created_at           DateTime              @default(now()) @db.Timestamp(6)
+  about                String?
   gallery              gallery[]
   matches              matches[]
   tournament_referees  tournament_referees[]
@@ -155,11 +155,11 @@ model tournament_teams {
   points                Int         @default(0)
   is_disqualified       Boolean     @default(false)
   pool_name             String?
-  is_knockout_upperhalf Boolean?
-  gender_type           String[]
   tournament_id         Int
   team_id               Int
   created_at            DateTime    @default(now()) @db.Timestamp(6)
+  gender_type           String[]
+  is_knockout_upperhalf Boolean?
   teams                 teams       @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
   tournaments           tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
 }
@@ -169,9 +169,6 @@ model matches {
   tournament_id  Int
   team_1_id      Int
   team_2_id      Int
-  quarters_held  Int              @default(0)
-  start_date     DateTime?        @db.Date
-  start_time     String?
   scorekeeper_id Int?
   address        String?
   status         Int              @default(1)
@@ -179,6 +176,9 @@ model matches {
   round_name     String?
   created_at     DateTime         @default(now()) @db.Timestamp(6)
   won_by_team_id Int?
+  quarters_held  Int              @default(0)
+  start_date     DateTime?        @db.Date
+  start_time     String?
   match_players  match_players[]
   match_quarters match_quarters[]
   scorekeeper    scorekeeper?     @relation(fields: [scorekeeper_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "scorekeeper_table")
@@ -203,11 +203,11 @@ model match_players {
   id         Int      @id @default(autoincrement())
   match_id   Int
   player_id  Int
-  is_captain Boolean  @default(false)
   points     Int      @default(0)
   fouls      Int      @default(0)
   created_at DateTime @default(now()) @db.Timestamp(6)
   team_id    Int
+  is_captain Boolean  @default(false)
   matches    matches  @relation(fields: [match_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "maches_table")
   players    players  @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
   teams      teams    @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "teams_table")
