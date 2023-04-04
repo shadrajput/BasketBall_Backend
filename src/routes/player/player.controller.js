@@ -71,7 +71,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
     });
 
     myPromise.then(async () => {
-    const data = await prisma.players.create({
+      const data = await prisma.players.create({
         data: {
           user_id: 1,
           photo: photo,
@@ -93,7 +93,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
       res.status(201)
         .json({
-          data : data,
+          data: data,
           success: true,
           message: "Registration successfull."
         });
@@ -105,8 +105,20 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 // -------------------- all_Player --------------------
 // ----------------------------------------------------
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
+  let { page, PlayerName } = req.params;
+  PlayerName = PlayerName == "search" ? "" : PlayerName;
+  console.log(page , PlayerName)
   try {
     const all_players = await prisma.players.findMany({
+      // orderBy: { points: "desc" },
+      // skip: page * 10,
+      // take: 10,
+      where: {
+        first_name: {
+          contains: PlayerName == "" ? "" : PlayerName,
+          mode: "insensitive",
+        },
+      },
       include: {
         player_statistics: true,
         users: true,

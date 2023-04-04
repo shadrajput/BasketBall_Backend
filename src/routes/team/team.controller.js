@@ -76,6 +76,7 @@ async function httpUpdateTeam(req, res, next) {
 async function httpGetAllTeams(req, res, next) {
   let { page, TeamName } = req.params;
   TeamName = TeamName == "search" ? "" : TeamName;
+  console.log(page , TeamName)
   try {
     const teams = await prisma.teams.findMany({
       orderBy: { matches_won: "desc" },
