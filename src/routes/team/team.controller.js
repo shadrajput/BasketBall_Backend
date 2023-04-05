@@ -19,7 +19,7 @@ async function httpTeamRegister(req, res, next) {
   try {
     const formData = await parseFormData(req);
     const teamData = JSON.parse(formData?.fields?.data);
-    console.log(teamData)
+    console.log(teamData);
     const teamName = teamData.TeamInfo.team_name;
     const captain = teamData.captain;
     const existingTeam = await prisma.teams.findFirst({
@@ -97,12 +97,12 @@ async function httpGetAllTeams(req, res, next) {
 }
 
 async function httpGetTeamByUserId(req, res, next) {
-  const userId = req.param.userId;
+  const userId = req.params.userId;
 
   try {
     const teams = await prisma.teams.findMany({
       where: {
-        user_id: userId,
+        user_id: Number(userId),
       },
     });
 
