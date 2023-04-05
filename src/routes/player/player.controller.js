@@ -105,6 +105,8 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 // -------------------- all_Player --------------------
 // ----------------------------------------------------
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
+  const NoofPlayer = 10;
+
   try {
     const all_players = await prisma.players.findMany({
       include: {
@@ -122,9 +124,13 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
       (a, b) => b.player_statistics[0].points - a.player_statistics[0].points
     );
 
-    
+    const startIndex = (1 - 1) * NoofPlayer;
+    const endIndex = startIndex + NoofPlayer;
 
-    return res.status(200).json({ success: true, data: sortedData });
+    // Slice the array to get the current page
+    const currentArray = sortedData.slice(startIndex, endIndex);
+
+    return res.status(200).json({ success: true, data: currentArray });
   } catch (error) {
     next(error);
   }
