@@ -24,7 +24,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
     }
     const playerData = JSON.parse(fields?.data);
     const { basicInfo, gameInfo } = playerData.PlayerInfo;
-    console.log(basicInfo)
+    console.log(basicInfo);
     const result = await prisma.players.findFirst({
       where: {
         AND: [
@@ -44,8 +44,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Please Change Mobile Number"));
     }
 
-
-    console.log(fields)
+    console.log(fields);
 
     let photo = "";
     const myPromise = new Promise(async (resolve, reject) => {
@@ -101,7 +100,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
           first_name: basicInfo.first_name,
           middle_name: basicInfo.middle_name,
           last_name: basicInfo.last_name,
-          mobile: '1234567890',
+          mobile: "1234567890",
           alternate_mobile: basicInfo.alternate_mobile,
           gender: basicInfo.gender,
           height: Number(gameInfo.height),
@@ -142,7 +141,7 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
       },
       include: {
         player_statistics: {
-          orderBy: { points: "desc" }
+          orderBy: { points: "desc" },
         },
         users: true,
         team_players: {
@@ -202,9 +201,8 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
       message: "Single player details",
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
-
 });
 
 // ----------------------------------------------------
@@ -220,17 +218,19 @@ const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
       },
     });
 
-  res.status(200).json({
-    data: SinglePlayerDetails,
-    success: true,
-  });
+    res.status(200).json({
+      data: SinglePlayerDetails,
+      success: true,
+    });
+  } catch (error) {
+    next(error);
+  }
 });
 
 // ----------------------------------------------------
 // ------------------ Update_Player -------------------
 // ----------------------------------------------------
 const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
-
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
     if (err) {
@@ -259,7 +259,9 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
                 //Deleting old photo
                 imagekit.deleteFile(old_photo_fileId, function (error, result) {
                   if (error) {
-                    return next(new ErrorHandler("Failed to update photo", 500));
+                    return next(
+                      new ErrorHandler("Failed to update photo", 500)
+                    );
                   }
                 });
               }
@@ -357,9 +359,8 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
           message: "Player details updated",
         });
       });
-
     } catch (error) {
-      next(error)
+      next(error);
     }
   });
 });
@@ -382,9 +383,8 @@ const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
       message: "Player details deleted",
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
-
 });
 
 module.exports = {
