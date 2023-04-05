@@ -24,7 +24,29 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
     }
     const playerData = JSON.parse(fields?.data);
     const { basicInfo, gameInfo } = playerData.PlayerInfo;
+    console.log(basicInfo)
+    const result = await prisma.players.findFirst({
+      where: {
+        AND: [
+          {
+            mobile: {
+              contains: basicInfo.mobile,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+    });
+
+    // console.log(result)
+
+    if (result) {
+      return next(new ErrorHandler("Please Change Mobile Number"));
+    }
+
+
     console.log(fields)
+
     let photo = "";
     const myPromise = new Promise(async (resolve, reject) => {
       if (files.photo) {
@@ -76,20 +98,20 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
         data: {
           user_id: 1,
           photo: photo,
-          first_name: basicInfo.firstName,
-          middle_name: basicInfo.middleName,
-          last_name: basicInfo.lastName,
+          first_name: basicInfo.first_name,
+          middle_name: basicInfo.middle_name,
+          last_name: basicInfo.last_name,
           mobile: '1234567890',
-          alternate_mobile: basicInfo.alternativeNo,
+          alternate_mobile: basicInfo.alternate_mobile,
           gender: basicInfo.gender,
           height: Number(gameInfo.height),
           weight: Number(gameInfo.weight),
           pincode: basicInfo.pincode,
-          mobile: basicInfo.mobileNo,
-          playing_position: gameInfo.playerPosition,
-          jersey_no: Number(gameInfo.JerseyNumber),
-          about: gameInfo.Experience,
-          date_of_birth: new Date(basicInfo.dob),
+          mobile: basicInfo.mobile,
+          playing_position: gameInfo.playing_position,
+          jersey_no: Number(gameInfo.jersey_no),
+          about: gameInfo.about,
+          date_of_birth: new Date(basicInfo.date_of_birth),
         },
       });
 
