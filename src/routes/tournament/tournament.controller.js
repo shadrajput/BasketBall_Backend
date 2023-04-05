@@ -45,7 +45,8 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
 
     let logo = "";
     const myPromise = new Promise(async (resolve, reject) => {
-      if (files.logo.originalFilename != "" && files.logo.size != 0) {
+
+      if (files.logo && files.logo.originalFilename != "" && files.logo.size != 0) {
         const ext = files.logo.mimetype.split("/")[1].trim();
         console.log(1)
         if (files.logo.size >= 2000000) {
@@ -309,6 +310,8 @@ const startRegistration = catchAsyncErrors(async (req, res, next) => {
 
 const closeRegistration = catchAsyncErrors(async (req, res, next) => {
   const { tournament_id } = req.params;
+
+  console.log('ok')
 
   await prisma.tournaments.update({
     where: {

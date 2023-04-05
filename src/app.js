@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/admin", adminRouter);
 app.use('/user', userRouter);
 app.use('/tournament', tournamentRouter);
-app.use('/players', playerRouter);
+app.use('/player', playerRouter);
 app.use('/news', newsRouter);
 app.use('/gallery', galleryRouter);
 app.use('/scoreboard', scoreboardRouter);
