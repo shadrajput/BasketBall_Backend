@@ -37,7 +37,7 @@ router.get(
 );
 
 router.put(
-  "/update/:player_id",
+  "/update",
   // isAuthenticatedUser,
   // isAuthPlayer,
   updatePlayerDetails
