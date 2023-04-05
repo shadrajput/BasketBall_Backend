@@ -117,7 +117,14 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
         },
       },
     });
-    return res.status(200).json({ success: true, data: all_players });
+
+    const sortedData = all_players.sort(
+      (a, b) => b.player_statistics[0].points - a.player_statistics[0].points
+    );
+
+    
+
+    return res.status(200).json({ success: true, data: sortedData });
   } catch (error) {
     next(error);
   }

@@ -21,7 +21,6 @@ async function httpTeamRegister(req, res, next) {
     const teamData = JSON.parse(formData?.fields?.data);
     const teamName = teamData.TeamInfo.team_name;
     const captain = teamData.captain;
-    console.log(teamData);
     const existingTeam = await prisma.teams.findFirst({
       where: {
         team_name: {
@@ -53,7 +52,6 @@ async function httpUpdateTeam(req, res, next) {
 
     let logo = teamData?.TeamInfo?.logo ? teamData?.TeamInfo?.logo : "";
     logo = await uploadLogo(formData, logo);
-    console.log("logo ", logo);
     const uteam = await updateTeam({
       id: teamData?.TeamInfo?.id,
       data: teamData?.TeamInfo,
@@ -97,20 +95,13 @@ async function httpGetAllTeams(req, res, next) {
   }
 }
 
-async function httpSearchTeamByName(req, res, next) {
-  const query = req.body?.query;
-  if (!query) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Please Enter Team name" });
-  }
+async function httpGetTeamByUserId(req, res, next) {
+  const userId = req.param.userId;
+
   try {
     const teams = await prisma.teams.findMany({
       where: {
-        team_name: {
-          contains: query,
-          mode: "insensitive",
-        },
+        user_id: userId,
       },
     });
 
@@ -123,13 +114,11 @@ async function httpSearchTeamByName(req, res, next) {
 async function uploadLogo(formData, logo) {
   const { files } = formData;
   if (!files || !files.team_logo) {
-    console.log("empty ke andar to gye");
     return logo.length <= 2 ? DefaultteamImage : logo;
   }
 
   try {
     if (logo && logo != DefaultteamImage) {
-      console.log("yaha to ja raha he");
       await deleteImage(logo);
     }
     return await uploadImage(files.team_logo, "team_images");
@@ -156,7 +145,7 @@ async function httpGetTeamDetailById(req, res, next) {
 module.exports = {
   httpTeamRegister,
   httpGetTeamDetailById,
-  httpSearchTeamByName,
+  httpGetTeamByUserId,
   httpUpdateTeam,
   httpGetAllTeams,
 };

@@ -7,8 +7,8 @@ async function createTeam(teamData, logo, captain) {
     about_team,
     coach_name,
     coach_mobile,
-    assistant_coach_name,
-    assistant_coach_mobile,
+    asst_coach_name,
+    asst_coach_mobile,
   } = teamData.TeamInfo;
 
   return prisma.teams.create({
@@ -18,8 +18,8 @@ async function createTeam(teamData, logo, captain) {
       about_team,
       coach_name,
       coach_mobile,
-      asst_coach_name: assistant_coach_name,
-      asst_coach_mobile: assistant_coach_mobile,
+      asst_coach_name,
+      asst_coach_mobile,
       user_id: 1,
       captain_id: Number(captain),
     },
@@ -35,7 +35,6 @@ async function deleteTeamPlayer(teamID) {
 }
 
 async function updateTeam({ id, data, logo, captain }) {
-  console.log(captain);
   const {
     team_name,
     coach_name,
@@ -109,7 +108,6 @@ async function getTeamDetail(team_id) {
 }
 
 async function createTeamPlayers(playerList, teamId) {
-  console.log(playerList[0]);
   return Promise.all(
     playerList.map((player) =>
       prisma.team_players.create({
