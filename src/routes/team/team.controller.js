@@ -104,6 +104,9 @@ async function httpGetTeamByUserId(req, res, next) {
       where: {
         user_id: Number(userId),
       },
+      include: {
+        team_players: true,
+      },
     });
 
     return res.status(200).json({ success: true, data: teams });
