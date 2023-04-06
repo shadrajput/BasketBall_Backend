@@ -19,7 +19,6 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
     if (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
-
     const result = await prisma.tournaments.findFirst({
       where: {
         AND: [
@@ -371,7 +370,7 @@ const teamsRequests = catchAsyncErrors(async (req, res, next) => {
       tournament_id,
       is_selected: 2, //pending
     },
-    include:{
+    include: {
       teams: true,
     }
   });
@@ -486,12 +485,12 @@ const createPools = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  if (all_teams%teams_per_group != 0){
+  if (all_teams % teams_per_group != 0) {
     return new ErrorHandler(`Can't make pools with ${teams_per_group} teams per group`, 400);
   }
-  
+
   //shuffling the teams in an array
-  for (let i = 0; i < 10; ) {
+  for (let i = 0; i < 10;) {
     const random_no_1 = Match.floor(Math.random() * 10);
     const random_no_2 = Match.floor(Math.random() * 10);
 

@@ -4,6 +4,11 @@ const ErrorHandler = require("../../utils/ErrorHandler");
 const ImageKit = require("imagekit");
 const formidable = require("formidable");
 const fs = require("fs");
+const {
+  uploadImage,
+  deleteImage,
+  DefaultplayerImage,
+} = require("../../helper/imageUpload");
 
 const prisma = new PrismaClient();
 
@@ -19,102 +24,61 @@ const imagekit = new ImageKit({
 const playerRegistration = catchAsyncErrors(async (req, res, next) => {
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
-    }
-    const playerData = JSON.parse(fields?.data);
-    const { basicInfo, gameInfo } = playerData.PlayerInfo;
-    console.log(basicInfo)
-    const result = await prisma.players.findFirst({
-      where: {
-        AND: [
-          {
-            mobile: {
-              contains: basicInfo.mobile,
-              mode: "insensitive",
-            },
+      try {
+        if (err) {
+          return res.status(500).json({ success: false, message: err.message });
+        }
+  
+        const playerData = JSON.parse(fields?.data);
+        const { basicInfo, gameInfo } = playerData.PlayerInfo;
+        const result = await prisma.players.findFirst({
+          where: {
+            AND: [
+              {
+                mobile: {
+                  contains: basicInfo.mobile,
+                  mode: "insensitive",
+                },
+              },
+            ],
           },
-        ],
-      },
-    });
-
-    if (result) {
-      return next(new ErrorHandler("Please Change Mobile Number"));
-    }
-
-    let photo = "";
-    const myPromise = new Promise(async (resolve, reject) => {
-      if (files.photo) {
-        const ext = files.photo.mimetype.split("/")[1].trim();
-
-        if (files.photo.size >= 2000000) {
-          // 2000000(bytes) = 2MB
-          return next(
-            new ErrorHandler("Photo size should be less than 2MB", 400)
-          );
-        }
-        if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-          return next(
-            new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400)
-          );
-        }
-
-        var oldPath = files.photo.filepath;
-        var fileName = Date.now() + "_" + files.photo.originalFilename;
-
-        fs.readFile(oldPath, function (err, data) {
-          if (err) {
-            return next(new ErrorHandler(error.message, 500));
-          }
-          imagekit.upload(
-            {
-              file: data,
-              fileName: fileName,
-              overwriteFile: true,
-              folder: "/player_images",
-            },
-            function (error, result) {
-              if (error) {
-                return next(new ErrorHandler(error.message, 500));
-              }
-              photo = result.url;
-              resolve();
-            }
-          );
         });
-      } else {
-        resolve();
+  
+        if (result) {
+          return next(new ErrorHandler("Please Change Mobile Number"));
+        }
+  
+        let photo = "";
+        photo = await uploadLogo(files, photo);
+        const data = await prisma.players.create({
+          data: {
+            user_id: 1,
+            photo: photo,
+            first_name: basicInfo.first_name,
+            middle_name: basicInfo.middle_name,
+            last_name: basicInfo.last_name,
+            alternate_mobile: basicInfo.alternate_mobile,
+            gender: basicInfo.gender,
+            height: Number(gameInfo.height),
+            weight: Number(gameInfo.weight),
+            pincode: basicInfo.pincode,
+            mobile: basicInfo.mobile,
+            playing_position: gameInfo.playing_position,
+            jersey_no: Number(gameInfo.jersey_no),
+            about: gameInfo.about,
+            date_of_birth: new Date(basicInfo.date_of_birth),
+          },
+        });
+  
+        res.status(201).json({
+          data: data,
+          success: true,
+          message: "Registration successfull.",
+        });
+      } catch (error) {
+          next(error)
       }
-    });
 
-    myPromise.then(async () => {
-      const data = await prisma.players.create({
-        data: {
-          user_id: 1,
-          photo: photo,
-          first_name: basicInfo.first_name,
-          middle_name: basicInfo.middle_name,
-          last_name: basicInfo.last_name,
-          mobile: '1234567890',
-          alternate_mobile: basicInfo.alternate_mobile,
-          gender: basicInfo.gender,
-          height: Number(gameInfo.height),
-          weight: Number(gameInfo.weight),
-          pincode: basicInfo.pincode,
-          mobile: basicInfo.mobile,
-          playing_position: gameInfo.playing_position,
-          jersey_no: Number(gameInfo.jersey_no),
-          about: gameInfo.about,
-          date_of_birth: new Date(basicInfo.date_of_birth),
-        },
-      });
-
-      res.status(201).json({
-        data: data,
-        success: true,
-        message: "Registration successfull.",
-      });
-    });
   });
 });
 
@@ -221,143 +185,41 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
   form.parse(req, async function (err, fields, files) {
 
     try {
-      
       if (err) {
         return res.status(500).json({ success: false, message: err.message });
       }
-  
+
       const playerData = JSON.parse(fields?.data);
       const { basicInfo, gameInfo } = playerData.PlayerInfo;
-      console.log(basicInfo)
-      const result = await prisma.players.findFirst({
+      let photo = basicInfo?.photo?.length ? basicInfo?.photo : ""
+      photo = await uploadLogo(files, photo);
+      const data = await prisma.players.update({
         where: {
-          AND: [
-            {
-              mobile: {
-                contains: basicInfo.mobile,
-                mode: "insensitive",
-              },
-            },
-          ],
+          id: Number(basicInfo.id)
+        },
+        data: {
+          first_name: basicInfo.first_name,
+          photo,
+          middle_name: basicInfo.middle_name,
+          last_name: basicInfo.last_name,
+          mobile: Number(basicInfo.mobile),
+          alternate_mobile: basicInfo.alternate_mobile,
+          gender: basicInfo.gender,
+          height: Number(gameInfo.height),
+          weight: Number(gameInfo.weight),
+          pincode: basicInfo.pincode,
+          mobile: basicInfo.mobile,
+          playing_position: gameInfo.playing_position,
+          jersey_no: Number(gameInfo.jersey_no),
+          about: gameInfo.about,
+          date_of_birth: new Date(basicInfo.date_of_birth),
         },
       });
-      let photo = "";
-      // const myPromise = new Promise(async (resolve, reject) => {
-      //   //Searching and deleting old photo from imagekit
-      //   if (fields.old_photo_url != fields.photo_name) {
-      //     //Searching old photo
-      //     const old_photo_name = fields.old_photo_url.split("/")[5];
-      //     let old_photo_fileId = "";
-      //     imagekit.listFiles(
-      //       {
-      //         searchQuery: `'name'="${old_photo_name}"`,
-      //       },
-      //       function (error, result) {
-      //         if (error) {
-      //           return next(new ErrorHandler("Failed to update photo", 500));
-      //         }
-      //         if (result && result.length > 0) {
-      //           old_photo_fileId = result[0].fileId;
 
-      //           //Deleting old photo
-      //           imagekit.deleteFile(old_photo_fileId, function (error, result) {
-      //             if (error) {
-      //               return next(new ErrorHandler("Failed to update photo", 500));
-      //             }
-      //           });
-      //         }
-      //       }
-      //     );
-      //   }
-      //   if (files.photo.originalFilename != "" && files.photo.size != 0) {
-      //     const ext = files.photo.mimetype.split("/")[1].trim();
-
-      //     if (files.photo.size >= 2000000) {
-      //       // 2000000(bytes) = 2MB
-      //       return next(
-      //         new ErrorHandler("Photo size should be less than 2MB", 400)
-      //       );
-      //     }
-      //     if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-      //       return next(
-      //         new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400)
-      //       );
-      //     }
-
-      //     var oldPath = files.photo.filepath;
-      //     var fileName = Date.now() + "_" + files.photo.originalFilename;
-
-      //     fs.readFile(oldPath, function (err, data) {
-      //       if (err) {
-      //         return next(new ErrorHandler(error.message, 500));
-      //       }
-      //       imagekit.upload(
-      //         {
-      //           file: data,
-      //           fileName: fileName,
-      //           overwriteFile: true,
-      //           folder: "/player_images",
-      //         },
-      //         function (error, result) {
-      //           if (error) {
-      //             return next(new ErrorHandler(error.message, 500));
-      //           }
-      //           photo = result.url;
-      //           resolve();
-      //         }
-      //       );
-      //     });
-      //   } else {
-      //     resolve();
-      //   }
-      // });
-
-      myPromise.then(async () => {
-        const { player_id } = req.params;
-        const {
-          first_name,
-          middle_name,
-          last_name,
-          alternate_mobile,
-          gender,
-          height,
-          weight,
-          pincode,
-          city,
-          state,
-          country,
-          playing_position,
-          jersey_no,
-          about,
-        } = fields;
-
-        const updatePlayerDetails = await prisma.players.update({
-          where: {
-            id: Number(player_id),
-          },
-          data: {
-            first_name,
-            middle_name,
-            last_name,
-            alternate_mobile,
-            gender,
-            height: Number(height),
-            weight: Number(weight),
-            pincode: Number(pincode),
-            city,
-            state,
-            country,
-            playing_position,
-            jersey_no: Number(jersey_no),
-            about,
-          },
-        });
-
-        res.status(200).json({
-          updatePlayerDetails: updatePlayerDetails,
-          success: true,
-          message: "Player details updated",
-        });
+      res.status(201).json({
+        data: data,
+        success: true,
+        message: "Player Details Update Successfull.",
       });
 
     } catch (error) {
@@ -388,6 +250,28 @@ const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
   }
 
 });
+
+
+// ----------------------------------------------------
+// ------------------ Upload_logo -------------------
+// ----------------------------------------------------
+async function uploadLogo(files, photo) {
+    console.log(files)
+  if (!files || !files.logo) {
+    console.log("empty ke andar to gye");
+    return photo.length <= 2 ? DefaultplayerImage : photo;
+  }
+  console.log("New Image upload kia")
+  try {
+    if (photo && photo != DefaultplayerImage) {
+      console.log("yaha to ja raha he");
+      await deleteImage(photo);
+    }
+    return await uploadImage(files.logo, "player_image");
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
 
 module.exports = {
   playerRegistration,

@@ -122,6 +122,7 @@ async function httpSearchTeamByName(req, res, next) {
 }
 
 async function uploadLogo(formData, logo) {
+  console.log(formData , logo)
   const { files } = formData;
   if (!files || !files.team_logo) {
     console.log("empty ke andar to gye");
