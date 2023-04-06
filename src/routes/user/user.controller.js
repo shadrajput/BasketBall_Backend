@@ -8,7 +8,9 @@ const axios = require('axios')
 const prisma = new PrismaClient();
 
 const userSignup = catchAsyncErrors(async(req, res, next) =>{
-    const {name, email, password, mobile} = req.body
+    const {email, password} = req.body
+    const name = req.body.fullname;
+    const mobile = req.body.phone
 
     //checking mobile number already exist
     let user = await prisma.users.findFirst({where: {mobile}});
@@ -46,15 +48,19 @@ const userSignup = catchAsyncErrors(async(req, res, next) =>{
 
 const userLogin = catchAsyncErrors(async(req, res, next) =>{
     const {mobile, password} = req.body
-    const user = await prisma.users.findUnique({where:{mobile}});
+    const user = await prisma.users.findUnique({
+        where:{mobile}
+    });
+
     
-    if(!user || ! await comparePassword(password, user.password)){
+    if(!user || !await comparePassword(password, user.password)){
         return next(new ErrorHandler('Invalid mobile or password', 400));
     }
-
+    
+    delete user.password
     const token = generateToken(user.id);
 
-    res.status(200).json({success: true, message: 'Login successfully', token, is_account_verified: user.is_verified })
+    res.status(200).json({success: true, message: 'Login successful', token, user })
     
 })
 
