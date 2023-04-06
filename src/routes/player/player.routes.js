@@ -19,7 +19,7 @@ router.post(
   playerRegistration
 );
 router.get(
-  "/",
+  "/list/:page&:PlayerName",
   // isAuthenticatedUser,
   allPlayers
 );
