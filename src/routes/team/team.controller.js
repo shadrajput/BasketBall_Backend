@@ -96,6 +96,12 @@ async function httpGetAllTeams(req, res, next) {
   }
 }
 
+async function httpPostTournament(req, res) {
+  console.log(res.body);
+
+  return res.status(201).json("faf d ksd");
+}
+
 async function httpGetTeamByUserId(req, res, next) {
   const userId = req.params.userId;
 
@@ -151,5 +157,6 @@ module.exports = {
   httpGetTeamDetailById,
   httpGetTeamByUserId,
   httpUpdateTeam,
+  httpPostTournament,
   httpGetAllTeams,
 };
