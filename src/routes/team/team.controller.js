@@ -21,7 +21,8 @@ async function httpTeamRegister(req, res, next) {
     const teamData = JSON.parse(formData?.fields?.data);
     console.log(teamData)
     const teamName = teamData.TeamInfo.team_name;
-    const captain = teamData.captain;
+    const captain = teamData.captain
+  
     console.log(teamData);
     const existingTeam = await prisma.teams.findFirst({
       where: {
