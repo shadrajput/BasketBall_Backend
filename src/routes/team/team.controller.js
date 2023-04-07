@@ -97,9 +97,39 @@ async function httpGetAllTeams(req, res, next) {
 }
 
 async function httpPostTournament(req, res) {
-  console.log(res.body);
+  console.log(req.body);
+  const data = req.body;
 
-  return res.status(201).json("faf d ksd");
+  try {
+    const existingRecord = await prisma.tournament_teams.findFirst({
+      where: {
+        tournament_id: { equals: data.tournament_id },
+        AND: {
+          team_id: { equals: data.team_id },
+        },
+      },
+    });
+
+    console.log(existingRecord);
+    if (existingRecord) {
+      return res.status(400).json({
+        success: false,
+        message: "This team is already registered for this tournament.",
+      });
+    }
+    const result = await prisma.tournament_teams.create({
+      data: {
+        age_categories: data.age_cutoff,
+        gender_type: data.tournament_category,
+        tournament_id: data.tournament_id,
+        team_id: data.team_id,
+      },
+    });
+
+    return res.status(201).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
 }
 
 async function httpGetTeamByUserId(req, res, next) {
@@ -148,7 +178,7 @@ async function httpGetTeamDetailById(req, res, next) {
 
     return res.status(200).json({ success: true, data: team });
   } catch (error) {
-    next(error);
+    throw new Error(error.message);
   }
 }
 
