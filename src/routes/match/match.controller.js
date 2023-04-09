@@ -5,6 +5,21 @@ const generateToken = require("../../utils/tokenGenerator");
 
 const prisma = new PrismaClient();
 
+async function getMatchList(req, res) {
+  const { pageNo, status } = req.params;
+
+  const matchesList = await prisma.matches.findMany({
+    where: {
+      status: Number(status),
+    },
+    skip: pageNo * 5,
+    take: 5,
+  });
+
+  console.log(matchesList);
+  res.status(201).json({ success: true, data: matchesList });
+}
+
 const matchScore = catchAsyncErrors(async (req, res, next) => {
   const match_id = Number(req.params.match_id);
 
@@ -98,7 +113,7 @@ const updateMatchDetails = catchAsyncErrors(async (req, res, next) => {
       start_date: new Date(start_date),
       start_time,
       address,
-      scorekeeper_id: scorekeeper_details.id
+      scorekeeper_id: scorekeeper_details.id,
     },
   });
 
@@ -127,4 +142,5 @@ module.exports = {
   matchScore,
   updateMatchDetails,
   viralTheMatch,
+  getMatchList,
 };

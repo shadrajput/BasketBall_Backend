@@ -107,7 +107,7 @@ async function httpPostTournament(req, res) {
         AND: {
           team_id: { equals: data.team_id },
         },
-      },
+      },  
     });
 
     console.log(existingRecord);
