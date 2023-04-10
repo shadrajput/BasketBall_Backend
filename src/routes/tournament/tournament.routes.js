@@ -9,6 +9,7 @@ const {
   tournamentOfOrganizer,
   updateTournamentDetails,
   tournamentDetails,
+  tournamentSchedule,
   startRegistration,
   closeRegistration,
   startTournament,
@@ -31,6 +32,9 @@ isAuthenticatedUser, allTournaments);
 router.get("/organizer", isAuthenticatedUser, tournamentOfOrganizer);
 
 router.get("/details/:tournament_id", isAuthenticatedUser, tournamentDetails);
+
+router.get("/schedule/:tournament_id", tournamentSchedule);
+
 router.put(
   "/update/:tournament_id",
   isAuthenticatedUser,

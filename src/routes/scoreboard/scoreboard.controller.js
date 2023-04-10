@@ -47,12 +47,13 @@ const startMatch = catchAsyncErrors(async(req, res, next)=>{
             created_at: 'desc'
         }
     })
+    
     await prisma.match_quarters.create({
         data:{
             match_id,
             quarter_number: 1,
-            timeline_start_score_id: last_score_detail.id,
-            timeline_end_score_id: last_score_detail.id
+            timeline_start_score_id: !last_score_detail ? null : last_score_detail.id,
+            timeline_end_score_id: !last_score_detail ? null : last_score_detail.id
         }
     })
 
