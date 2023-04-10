@@ -2,24 +2,44 @@ const catchAsyncErrors = require("../../middlewares/catchAsyncErrors");
 const { PrismaClient } = require("@prisma/client");
 const ErrorHandler = require("../../utils/ErrorHandler");
 const generateToken = require("../../utils/tokenGenerator");
+const Joi = require("joi");
+const { MatchListGetschema } = require("./match.model");
 
 const prisma = new PrismaClient();
 
-async function getMatchList(req, res) {
-  console.log("yaha");
-  const { pageNo, status } = req.params;
-  console.log("ho raha he");
-  const matchesList = await prisma.matches.findMany({
-    where: {
-      status: Number(status),
-    },
-    skip: pageNo * 5,
-    take: 5,
-  });
+async function getMatchList(req, res, next) {
+  try {
+    const { error } = MatchListGetschema.validate(req.params);
+    if (error) {
+      throw new Error(error.message);
+    }
 
-  res.status(200).json({ success: true, data: matchesList });
+    const { pageNo, status } = req.params;
+
+    const matchesList = await prisma.matches.findMany({
+      where: {
+        status: Number(status),
+      },
+      include: {
+        tournaments: true,
+        team_1: true,
+        team_2: true,
+        won_by_team: true,
+        match_quarters: {
+          include: {
+            score: true,
+          },
+        },
+      },
+      skip: pageNo * 5,
+      take: 5,
+    });
+
+    res.status(200).json({ success: true, data: matchesList });
+  } catch (error) {
+    next(error);
+  }
 }
-
 const matchScore = catchAsyncErrors(async (req, res, next) => {
   const match_id = Number(req.params.match_id);
 

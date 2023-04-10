@@ -39,7 +39,8 @@ async function updateTeam({ id, data, logo, captain }) {
     team_name,
     coach_name,
     coach_mobile,
-    asst_coach_name,
+    
+    t_coach_name,
     asst_coach_mobile,
   } = data;
 

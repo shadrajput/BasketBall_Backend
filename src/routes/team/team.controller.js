@@ -88,6 +88,7 @@ async function httpGetAllTeams(req, res, next) {
       },
       include: {
         team_players: true,
+        users: true,
       },
     });
     return res.status(200).json({ success: true, data: teams });
@@ -107,7 +108,7 @@ async function httpPostTournament(req, res) {
         AND: {
           team_id: { equals: data.team_id },
         },
-      },  
+      },
     });
 
     console.log(existingRecord);
