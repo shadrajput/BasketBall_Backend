@@ -6,8 +6,9 @@ const generateToken = require("../../utils/tokenGenerator");
 const prisma = new PrismaClient();
 
 async function getMatchList(req, res) {
+  console.log("yaha");
   const { pageNo, status } = req.params;
-
+  console.log("ho raha he");
   const matchesList = await prisma.matches.findMany({
     where: {
       status: Number(status),
@@ -16,8 +17,7 @@ async function getMatchList(req, res) {
     take: 5,
   });
 
-  console.log(matchesList);
-  res.status(201).json({ success: true, data: matchesList });
+  res.status(200).json({ success: true, data: matchesList });
 }
 
 const matchScore = catchAsyncErrors(async (req, res, next) => {
