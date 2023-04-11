@@ -71,7 +71,7 @@ async function deleteImage(name) {
       await imagekit.deleteFile(imageID);
     }
   } catch (error) {
-    return next(new ErrorHandler("Failed to update logo", 500));
+    return new ErrorHandler("Failed to update logo", 500);
   }
 }
 let image =

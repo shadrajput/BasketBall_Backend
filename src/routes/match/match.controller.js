@@ -85,30 +85,31 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  const live_quarter = all_quarters.filter((quarter)=>{
-    return quarter.status == 2 //running
-  })
+  const live_quarter = all_quarters.find((quarter) => {
+    return quarter.status == 2; //running
+  });
 
-  let team_1_total_points = 0, team_2_total_points = 0, team_1_total_won = 0, team_2_total_won = 0
+  let team_1_total_points = 0,
+    team_2_total_points = 0,
+    team_1_total_won = 0,
+    team_2_total_won = 0;
 
-  for(let i=0; i<all_quarters.length; i++){
-    team_1_total_points += all_quarters[i].team_1_points
-    team_2_total_points += all_quarters[i].team_2_points
+  for (let i = 0; i < all_quarters.length; i++) {
+    team_1_total_points += all_quarters[i].team_1_points;
+    team_2_total_points += all_quarters[i].team_2_points;
 
-    if(all_quarters[i].won_by_team_id != null){
-      if(all_quarters[i].won_by_team_id == match_details.team_1_id){
-        team_1_total_won += 1
+    if (all_quarters[i].won_by_team_id != null) {
+      if (all_quarters[i].won_by_team_id == match_details.team_1_id) {
+        team_1_total_won += 1;
+      } else {
+        team_2_total_won += 1;
       }
-      else{
-        team_2_total_won += 1
-      }
-
     }
   }
 
   res.status(200).json({
     success: true,
-    match_data:{
+    match_data: {
       data: match_details,
       all_quarters,
       live_quarter,
@@ -118,7 +119,7 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
       team_2_total_won,
       team_1_players,
       team_2_players,
-    }
+    },
   });
 });
 
@@ -161,10 +162,9 @@ const updateMatchDetails = catchAsyncErrors(async (req, res, next) => {
     .json({ success: true, message: "Match details updated successfully" });
 });
 
-
 module.exports = {
   matchScore,
   updateMatchDetails,
-  viralTheMatch,
+  // viralTheMatch,
   getMatchList,
 };
