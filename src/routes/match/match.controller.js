@@ -80,14 +80,17 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
     where: {
       match_id,
     },
+    orderBy:{
+      created_at: 'asc'
+    },
     include: {
       score: true,
     },
   });
 
-  const live_quarter = all_quarters.find((quarter) => {
-    return quarter.status == 2; //running
-  });
+  const live_quarter = all_quarters.find((quarter)=>{
+    return quarter.status == 2 //running
+  })
 
   let team_1_total_points = 0,
     team_2_total_points = 0,

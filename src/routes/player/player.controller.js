@@ -93,14 +93,13 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
     console.log(gameInfo);
     myPromise.then(async () => {
-      const data = await prisma.players.create({
+      const player_data = await prisma.players.create({
         data: {
           user_id: 1,
           photo: photo,
           first_name: basicInfo.first_name,
           middle_name: basicInfo.middle_name,
           last_name: basicInfo.last_name,
-          mobile: "1234567890",
           alternate_mobile: basicInfo.alternate_mobile,
           gender: basicInfo.gender,
           height: Number(gameInfo.height),
@@ -114,10 +113,16 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
         },
       });
 
+      await prisma.player_statistics.create({
+        data:{
+          player_id: player_data.id
+        }
+      })
+
       res.status(201).json({
-        data: data,
+        data: player_data,
         success: true,
-        message: "Registration successfull.",
+        message: "Player registration successful",
       });
     });
   });

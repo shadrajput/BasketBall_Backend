@@ -95,7 +95,7 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
     //Updating score in match_quarter table
     if(match_details.team_1_id == team_id){
 
-        pointScoreByTeam = match_details.team_1_id.team_name
+        pointScoreByTeam = match_details.team_1.team_name
         
         //Updating point in team 1
         await prisma.match_quarters.update({
@@ -104,14 +104,15 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
             },
             data:{
                 team_1_points: {
-                    increament: points
-                }
+                    increment: points
+                },
+                is_undo_score: true
             }
         })
     }
     else{
 
-        pointScoreByTeam = match_details.team_2_id.team_name
+        pointScoreByTeam = match_details.team_2.team_name
         
         //Updating point in team 2
         await prisma.match_quarters.update({
@@ -120,8 +121,9 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
             },
             data:{
                 team_2_points: {
-                    increament: points
-                }
+                    increment: points
+                },
+                is_undo_score: true
             }
         })
     }
@@ -139,7 +141,7 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
         },
         data:{
             points: {
-                increament: points
+                increment: points
             }
         }
     })
@@ -149,13 +151,15 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
 
     const player_points =  getPlayerRankingPoints(tournament_details.level);
 
+    const player_stats = await prisma.player_statistics.findFirst({ where:{ player_id } })
+
     await prisma.player_statistics.update({
         where: {
-            player_id
+            id: player_stats.id
         },
         data:{
             points:{
-                increament: player_points
+                increment: player_points
             }
         }
     })
@@ -170,6 +174,19 @@ const addScore = catchAsyncErrors(async(req, res, next) =>{
             quarter_id: quarter_details.id
         }
     })
+
+    //updating timeline_start_id if this is a first score of a quarter
+    if(quarter_details.team_1_points == 0 && quarter_details.team_2_points == 0 && quarter_details.timeline_start_score_id == null){
+
+        await prisma.match_quarters.update({
+            where:{
+                id: quarter_details.id
+            },
+            data:{
+                timeline_start_score_id: match_score_details.id
+            }
+        })
+    }
 
     //updating timeline_end_id in match_quarters table
     await prisma.match_quarters.update({
@@ -202,27 +219,27 @@ const teamFoul = catchAsyncErrors( async (req, res, next)=>{
     })
 
     if(match_details.team_1_id == team_id){ //If team 1 foul
-        foulScoreByTeam = match_details.team_1_id.team_name
+        foulScoreByTeam = match_details.team_1.team_name
         await prisma.match_quarters.update({
             where: {
                 id: match_quarter_details.id
             },
             data:{
                 team_1_fouls:{
-                    increament: 1
+                    increment: 1
                 }
             }
         })
     }
     else{ //If team 2 foul
-        foulScoreByTeam = match_details.team_2_id.team_name
+        foulScoreByTeam = match_details.team_2.team_name
         await prisma.match_quarters.update({
             where: {
                 id: match_quarter_details.id
             },
             data:{
                 team_2_fouls:{
-                    increament: 1
+                    increment: 1
                 }
             }
         })
@@ -251,7 +268,7 @@ const playerFoul = catchAsyncErrors( async (req, res, next)=>{
         },
         data:{
             fouls:{
-                increament: 1
+                increment: 1
             }
         }
     })
@@ -278,7 +295,7 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
     const match_details = await prisma.matches.update({ 
         where: { id: match_id },
         data:{
-            quarters:{
+            quarters_held:{
                 increment: 1
             }
         } 
@@ -352,11 +369,11 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
     if(current_quarter.team_1_points == 0 && current_quarter.team_2_points == 0){ // quarter has just started   
         await prisma.match_quarters.delete({
             where:{
-               is: current_quarter.id 
+               id: current_quarter.id 
             }
         })
 
-        current_quarter = await prisma.match_quarters.findMany({ 
+        current_quarter = await prisma.match_quarters.findFirst({ 
             where: { match_id },
             orderBy:{
                 created_at: 'desc'
@@ -372,21 +389,55 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
                 status: 2
             }
         })
+
+        await prisma.matches.update({
+            where:{
+                id: match_id
+            },
+            data:{
+                quarters_held:{
+                    increment: -1
+                },
+            }
+        })
     }
 
     const match_score_details = await prisma.match_score.findFirst({
         where: { 
             quarter_id: current_quarter.id,
-            id:{
-                gte: current_quarter.timeline_start_score_id,
-                lte: current_quarter.timeline_end_score_id
-            }
+            AND:[
+                {
+                    id:{
+                        gte: current_quarter.timeline_start_score_id
+                    }
+                },
+                {
+                    id:{
+                        lte: current_quarter.timeline_end_score_id
+                    }
+                }
+            ],
         },
         orderBy:{
             created_at: 'desc'
         }
     })
 
+
+    //update timeline start and end score id in match_quarter table
+    if(match_score_details.timeline_start_score_id != match_score_details.timeline_end_score_id){
+        await prisma.match_quarters.update({
+            where: {
+                id: current_quarter.id
+            },
+            data:{
+                timeline_end_score_id: match_score_details.id - 1,
+            }
+        })
+    }
+    
+
+    //Deleting score 
     await prisma.match_score.delete({
         where:{
             id: match_score_details.id,
@@ -401,24 +452,26 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
     if(match_score_details.team_id == match_details.team_1_id){
         await prisma.match_quarters.update({
             where:{
-                id: match_score_details.id
+                id: current_quarter.id
             },
             data:{
                 team_1_points:{
-                    increament: -match_score_details.points
-                }
+                    increment: -match_score_details.points
+                },
+                is_undo_score: false
             }
         })
     }
     else{
         await prisma.match_quarters.update({
             where:{
-                id: match_score_details.id
+                id: current_quarter.id
             },
             data:{
                 team_2_points:{
-                    increament: -match_score_details.points
-                }
+                    increment: -match_score_details.points
+                },
+                is_undo_score: false
             }
         })
     }
@@ -442,7 +495,7 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
         },
         data:{
             points:{
-                increament: -match_score_details.points
+                increment: -match_score_details.points
             }
         }
     })
@@ -451,13 +504,18 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
     //decreasing the player point from player_statistics table
     const player_points = getPlayerRankingPoints(tournament_details.level)
 
-    await prisma.player_statistics.update({
+    const player_stats = await prisma.player_statistics.findFirst({
         where:{
             player_id: match_score_details.player_id
+        }
+    })
+    await prisma.player_statistics.update({
+        where:{
+            id: player_stats.id
         },
         data:{
             points:{
-                increament: -player_points
+                increment: -player_points
             }
         }
     })
@@ -560,10 +618,10 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
             },
             data:{
                 matches_played:{
-                    increament: 1
+                    increment: 1
                 },
                 matches_won:{
-                    increament: 1
+                    increment: 1
                 }
             }
         })
@@ -577,10 +635,10 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
             data:{
                 player_id:{
                     matches_played:{
-                        increament: 1
+                        increment: 1
                     },
                     matches_won:{
-                        increament: 1
+                        increment: 1
                     }
                 }
             }
@@ -594,10 +652,10 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
             },
             data:{
                 matches_played:{
-                    increament: 1
+                    increment: 1
                 },
                 matches_lost:{
-                    increament: 1
+                    increment: 1
                 }
             }
         }) 
@@ -611,10 +669,10 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
             data:{
                 player_id:{
                     matches_played:{
-                        increament: 1
+                        increment: 1
                     },
                     matches_lost:{
-                        increament: 1
+                        increment: 1
                     }
                 }
             }
@@ -628,7 +686,7 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
             },
             data:{
                 matches_played:{
-                    increament: 1
+                    increment: 1
                 }
             }
         })
@@ -639,7 +697,7 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
             },
             data:{
                 matches_played:{
-                    increament: 1
+                    increment: 1
                 }
             }
         })
@@ -652,7 +710,7 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
             data:{
                 player_id:{
                     matches_played: {
-                        increament: 1
+                        increment: 1
                     }
                 }
             }
