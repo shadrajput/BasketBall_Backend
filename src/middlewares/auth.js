@@ -27,17 +27,17 @@ exports.comparePassword = async function (enteredPassword, dbPassword) {
 
 //Authenticate user
 exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
-  // const token = req.headers.token;
+  const token = req.headers.authentication;
 
-  // if (!token) {
-  //   return next(new ErrorHandler("Please login to access this resource", 401));
-  // }
+  if (!token) {
+    return next(new ErrorHandler("Please login to access this resource", 401));
+  }
 
-  // const user_id = jwt.verify(token, JWTSign);
+  const user_id = jwt.verify(token, JWTSign);
 
-  // req.user = await prisma.users.findUnique({
-  //   where: { id: user_id },
-  // });
+  req.user = await prisma.users.findUnique({
+    where: { id: Number(user_id) },
+  });
 
   next();
 });
@@ -57,34 +57,23 @@ exports.isAuthenticatedAdmin = catchAsyncErrors(async (req, res, next) => {
 
 //Authenticate scorekeeper
 exports.verifyScorekeeper = catchAsyncErrors(async (req, res, next) => {
-  const scorekeeper_id = Number(req.params.id);
   const match_id = Number(req.params.match_id);
-  const token = Number(req.params.token);
+  const token = req.params.token;
 
-  if (token == null) {
+  if (token == null || token == '') {
     return next(new ErrorHandler("Link expired", 400));
-  }
-
-  const scorekeeper_details = await prisma.scorekeeper.findFirst({
-    where: {
-      id: scorekeeper_id,
-      token,
-    },
-  });
-
-  if (!scorekeeper_details) {
-    return next(
-      new ErrorHandler("You are not authorized to access this page", 400)
-    );
   }
 
   const match_detail = await prisma.matches.findFirst({
     where: {
-      scorekeeper_id: scorekeeper_details.id,
+      id: match_id,
+      scorekeeper:{
+        token
+      },
     },
   });
 
-  if (!match_detail || match_detail.id != match_id) {
+  if (!match_detail) {
     return next(
       new ErrorHandler("You are not authorized to access this page", 400)
     );
@@ -119,20 +108,20 @@ exports.isAuthTeamManager = catchAsyncErrors(async (req, res, next) => {
 
 //Authentication for tournament organizer
 exports.isAuthTournamentOrganizer = catchAsyncErrors(async (req, res, next) => {
-  // if (!req.user.is_organizer) {
-  //   return next(new ErrorHandler("Unauthorized access", 401));
-  // }
+  if (!req.user.is_organizer) {
+    return next(new ErrorHandler("Unauthorized access", 401));
+  }
 
-  // const user_tournament = await prisma.tournaments.findFirst({
-  //   where: {
-  //     id: req.params.tournament_id,
-  //     user_id: req.user.id,
-  //   },
-  // });
+  const user_tournament = await prisma.tournaments.findFirst({
+    where: {
+      id: Number(req.params.tournament_id),
+      user_id: req.user.id,
+    },
+  });
 
-  // if (!user_tournament) {
-  //   return next(new ErrorHandler("Unauthorized access", 401));
-  // }
+  if (!user_tournament) {
+    return next(new ErrorHandler("Unauthorized access", 401));
+  }
 
   next();
 });

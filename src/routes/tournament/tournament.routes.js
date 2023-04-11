@@ -6,8 +6,10 @@ const {
 const {
   tournamentRegistration,
   allTournaments,
+  tournamentOfOrganizer,
   updateTournamentDetails,
   tournamentDetails,
+  tournamentSchedule,
   startRegistration,
   closeRegistration,
   startTournament,
@@ -16,15 +18,23 @@ const {
   acceptTeamRequest,
   rejectTeamRequest,
   disqualifyTeam,
+  isAuthenticOrganizer,
   createPools,
   matchFormation,
 } = require("./tournament.controller");
 const router = express.Router();
 
 router.post("/registration", isAuthenticatedUser, tournamentRegistration);
+
 router.get("/", 
 isAuthenticatedUser, allTournaments);
+ 
+router.get("/organizer", isAuthenticatedUser, tournamentOfOrganizer);
+
 router.get("/details/:tournament_id", isAuthenticatedUser, tournamentDetails);
+
+router.get("/schedule/:tournament_id", tournamentSchedule);
+
 router.put(
   "/update/:tournament_id",
   isAuthenticatedUser,
@@ -79,6 +89,14 @@ router.put(
   isAuthTournamentOrganizer,
   disqualifyTeam
 );
+
+router.get(
+  "/auth-organizer/:tournament_id",
+  isAuthenticatedUser,
+  isAuthTournamentOrganizer,
+  isAuthenticOrganizer,
+);
+
 router.put(
   "/create-groups/:tournament_id",
   isAuthenticatedUser,
@@ -91,5 +109,6 @@ router.put(
   isAuthTournamentOrganizer,
   matchFormation
 );
+
 
 module.exports = router;

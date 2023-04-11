@@ -1,9 +1,10 @@
 const express = require('express');
-const { matchScore } = require('./match.controller')
+const { matchScore, updateMatchDetails } = require('./match.controller')
 const { isAuthenticatedUser } = require("../../middlewares/auth");
 
 const router = express.Router();
 
-router.get('/:match_id', isAuthenticatedUser, matchScore)
+router.get('/score/:match_id', isAuthenticatedUser, matchScore)
+router.put('/update/:match_id', isAuthenticatedUser, updateMatchDetails)
 
 module.exports = router

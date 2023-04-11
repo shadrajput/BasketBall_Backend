@@ -228,8 +228,6 @@ model match_quarters {
   is_undo_score           Boolean       @default(false)
   matches                 matches       @relation(fields: [match_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_table")
   teams                   teams?        @relation(fields: [won_by_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
-  timeline_end_score      match_score?  @relation("match_quarters_timeline_end_score_idTomatch_score", fields: [timeline_end_score_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "timeline_end_score_table_id")
-  timeline_start_score    match_score?  @relation("match_quarters_timeline_start_score_idTomatch_score", fields: [timeline_start_score_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "timeline_start_score_table_id")
   score                   match_score[] @relation("match_score_quarter_idTomatch_quarters")
 }
 
@@ -241,8 +239,6 @@ model match_score {
   created_at                    DateTime         @default(now()) @db.Timestamp(6)
   player_id                     Int
   quarter_id                    Int
-  match_quarters_timeline_end   match_quarters[] @relation("match_quarters_timeline_end_score_idTomatch_score")
-  match_quarters_timeline_start match_quarters[] @relation("match_quarters_timeline_start_score_idTomatch_score")
   quarter                       match_quarters   @relation("match_score_quarter_idTomatch_quarters", fields: [quarter_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_quarter_table")
   players                       players          @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
   teams                         teams            @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
