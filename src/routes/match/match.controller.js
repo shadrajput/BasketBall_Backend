@@ -45,6 +45,9 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
     where: {
       match_id,
     },
+    orderBy:{
+      created_at: 'asc'
+    },
     include: {
       score: true,
     },
