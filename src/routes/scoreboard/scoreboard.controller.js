@@ -389,6 +389,17 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
                 status: 2
             }
         })
+
+        await prisma.matches.update({
+            where:{
+                id: match_id
+            },
+            data:{
+                quarters_held:{
+                    increment: -1
+                },
+            }
+        })
     }
 
     const match_score_details = await prisma.match_score.findFirst({
@@ -412,19 +423,54 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
         }
     })
 
+
     //update timeline start and end score id in match_quarter table
-    const d = await prisma.match_quarters.update({
-        where: {
-            id: current_quarter.id
-        },
-        data:{
-            timeline_end_score_id: match_score_details.id - 1,
+    if(match_score_details.timeline_start_score_id == match_score_details.timeline_end_score_id){
+        await prisma.match_quarters.update({
+            where: {
+                id: current_quarter.id
+            },
+            data:{
+                timeline_start_score_id: null,
+                timeline_end_score_id: null
+            }
+        })
+    }
+    else{   
+         //Finding previous score id
+        let timeline_end_id = 
+            match_score_details.timeline_start_score_id != match_score_details.timeline_end_score_id
+            ?
+                match_score_details.id - 1
+            :
+                match_score_details.id
+
+        while(match_score_details.timeline_start_score_id != match_score_details.timeline_end_score_id){
+            const score_data = await prisma.match_score.findFirst({
+                where:{
+                    id: timeline_end_id
+                }
+            })
+
+            if(!score_data){
+                timeline_end_id -= 1
+            }
+            else{
+                break;
+            }
         }
-    })
 
-    console.log(match_score_details.id)
-    console.log(d)
+        await prisma.match_quarters.update({
+            where: {
+                id: current_quarter.id
+            },
+            data:{
+                timeline_end_score_id: timeline_end_id,
+            }
+        })
+    }
 
+    //Deleting score 
     await prisma.match_score.delete({
         where:{
             id: match_score_details.id,
@@ -439,7 +485,7 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
     if(match_score_details.team_id == match_details.team_1_id){
         await prisma.match_quarters.update({
             where:{
-                id: match_score_details.id
+                id: current_quarter.id
             },
             data:{
                 team_1_points:{
@@ -452,7 +498,7 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
     else{
         await prisma.match_quarters.update({
             where:{
-                id: match_score_details.id
+                id: current_quarter.id
             },
             data:{
                 team_2_points:{
@@ -491,9 +537,14 @@ const undoScore = catchAsyncErrors( async (req, res, next)=>{
     //decreasing the player point from player_statistics table
     const player_points = getPlayerRankingPoints(tournament_details.level)
 
+    const player_stats = await prisma.player_statistics.findFirst({
+        where:{
+            id: match_score_details.player_id
+        }
+    })
     await prisma.player_statistics.update({
         where:{
-            player_id: match_score_details.player_id
+            id: player_stats.id
         },
         data:{
             points:{
