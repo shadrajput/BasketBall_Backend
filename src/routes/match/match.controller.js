@@ -50,7 +50,7 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  const live_quarter = all_quarters.filter((quarter)=>{
+  const live_quarter = all_quarters.find((quarter)=>{
     return quarter.status == 2 //running
   })
 
