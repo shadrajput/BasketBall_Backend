@@ -26,6 +26,11 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
       match_id,
       team_id: match_details.team_1_id,
     },
+    orderBy:{
+      players:{
+        first_name: 'asc'
+      }
+    },
     include: {
       players: true,
     },
@@ -35,6 +40,11 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
     where: {
       match_id,
       team_id: match_details.team_2_id,
+    },
+    orderBy:{
+      players:{
+        first_name: 'asc'
+      }
     },
     include: {
       players: true,
