@@ -139,8 +139,59 @@ const updateMatchDetails = catchAsyncErrors(async (req, res, next) => {
     .json({ success: true, message: "Match details updated successfully" });
 });
 
+const deleteMatch = catchAsyncErrors(async(req, res, next)=>{
+  console.log("ok ")
+  const match_id = Number(req.params.match_id);
+
+  const quarters = await prisma.match_quarters.findFirst({
+    where:{
+      match_id
+    }
+  })
+
+
+  if(quarters){
+    return next(new ErrorHandler("Can't delete match"))
+  }
+
+  //Deleting all match players
+  await prisma.match_players.deleteMany({
+    where:{
+      match_id
+    }
+  })
+
+  const match_details = await prisma.matches.findUnique({
+    where:{
+      id: match_id
+    }
+  })
+
+  //Deleting match
+  await prisma.matches.delete({
+    where: {
+      id: match_id
+    }
+  })
+  
+
+  //Deleting scorekeeper
+  if(match_details.scorekeeper_id){
+    await prisma.scorekeeper.delete({
+      where:{
+        id: match_details.scorekeeper_id
+      }
+    })
+  }
+
+  res
+    .status(200)
+    .json({ success: true, message: "Match deleted successfully" });
+})
+
 
 module.exports = {
   matchScore,
   updateMatchDetails,
+  deleteMatch
 };
