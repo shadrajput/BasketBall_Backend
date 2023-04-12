@@ -292,6 +292,7 @@ const tournamentDetails = catchAsyncErrors(async (req, res, next) => {
       matches: {
         include:{
           tournaments: true,
+          match_quarters: true,
           team_1:  true,
           team_2: true,
           won_by_team: true,
