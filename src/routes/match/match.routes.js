@@ -1,5 +1,5 @@
 const express = require('express');
-const { matchScore, updateMatchDetails, deleteMatch } = require('./match.controller')
+const { matchScore,matchList, updateMatchDetails, deleteMatch } = require('./match.controller')
 const { isAuthenticatedUser, isAuthTournamentOrganizer } = require("../../middlewares/auth");
 
 const router = express.Router();

@@ -9,7 +9,9 @@ const {
 const { isAuthenticatedUser } = require("../../middlewares/auth");
 const router = express.Router();
 
-router.post("/add", isAuthenticatedUser, addnews);
+router.post("/add", 
+// isAuthenticatedUser, 
+addnews);
 router.get("/", allNews);
 router.get("/:id", oneNewsDetails);
 router.put("/update/:id", isAuthenticatedUser, updateNewsDetails);

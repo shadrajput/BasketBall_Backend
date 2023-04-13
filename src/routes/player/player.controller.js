@@ -24,63 +24,33 @@ const imagekit = new ImageKit({
 const playerRegistration = catchAsyncErrors(async (req, res, next) => {
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
-      try {
-        if (err) {
-          return res.status(500).json({ success: false, message: err.message });
-        }
-  
-        const playerData = JSON.parse(fields?.data);
-        const { basicInfo, gameInfo } = playerData.PlayerInfo;
-        const result = await prisma.players.findFirst({
-          where: {
-            AND: [
-              {
-                mobile: {
-                  contains: basicInfo.mobile,
-                  mode: "insensitive",
-                },
-              },
-            ],
-          },
-        });
-  
-        if (result) {
-          return next(new ErrorHandler("Please Change Mobile Number"));
-        }
-  
-        let photo = "";
-        photo = await uploadLogo(files, photo);
-        const data = await prisma.players.create({
-          data: {
-            user_id: 1,
-            photo: photo,
-            first_name: basicInfo.first_name,
-            middle_name: basicInfo.middle_name,
-            last_name: basicInfo.last_name,
-            alternate_mobile: basicInfo.alternate_mobile,
-            gender: basicInfo.gender,
-            height: Number(gameInfo.height),
-            weight: Number(gameInfo.weight),
-            pincode: basicInfo.pincode,
-            mobile: basicInfo.mobile,
-            playing_position: gameInfo.playing_position,
-            jersey_no: Number(gameInfo.jersey_no),
-            about: gameInfo.about,
-            date_of_birth: new Date(basicInfo.date_of_birth),
-          },
-        });
-  
-        res.status(201).json({
-          data: data,
-          success: true,
-          message: "Registration successfull.",
-        });
-      } catch (error) {
-          next(error)
+    try {
+      if (err) {
+        return res.status(500).json({ success: false, message: err.message });
       }
 
-    myPromise.then(async () => {
-      const player_data = await prisma.players.create({
+      const playerData = JSON.parse(fields?.data);
+      const { basicInfo, gameInfo } = playerData.PlayerInfo;
+      const result = await prisma.players.findFirst({
+        where: {
+          AND: [
+            {
+              mobile: {
+                contains: basicInfo.mobile,
+                mode: "insensitive",
+              },
+            },
+          ],
+        },
+      });
+
+      if (result) {
+        return next(new ErrorHandler("Please Change Mobile Number"));
+      }
+
+      let photo = "";
+      photo = await uploadLogo(files, photo);
+      const data = await prisma.players.create({
         data: {
           user_id: 1,
           photo: photo,
@@ -101,17 +71,49 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       });
 
       await prisma.player_statistics.create({
-        data:{
+        data: {
           player_id: player_data.id
         }
       })
 
       res.status(201).json({
-        data: player_data,
+        data: data,
         success: true,
-        message: "Player registration successful",
+        message: "Registration successfull.",
       });
-    });
+    } catch (error) {
+      next(error)
+    }
+
+    // myPromise.then(async () => {
+    //   const player_data = await prisma.players.create({
+    //     data: {
+    //       user_id: 1,
+    //       photo: photo,
+    //       first_name: basicInfo.first_name,
+    //       middle_name: basicInfo.middle_name,
+    //       last_name: basicInfo.last_name,
+    //       alternate_mobile: basicInfo.alternate_mobile,
+    //       gender: basicInfo.gender,
+    //       height: Number(gameInfo.height),
+    //       weight: Number(gameInfo.weight),
+    //       pincode: basicInfo.pincode,
+    //       mobile: basicInfo.mobile,
+    //       playing_position: gameInfo.playing_position,
+    //       jersey_no: Number(gameInfo.jersey_no),
+    //       about: gameInfo.about,
+    //       date_of_birth: new Date(basicInfo.date_of_birth),
+    //     },
+    //   });
+
+
+
+    //   res.status(201).json({
+    //     data: player_data,
+    //     success: true,
+    //     message: "Player registration successful",
+    //   });
+    // });
   });
 });
 
@@ -289,7 +291,7 @@ const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 // ------------------ Upload_logo -------------------
 // ----------------------------------------------------
 async function uploadLogo(files, photo) {
-    console.log(files)
+  console.log(files)
   if (!files || !files.logo) {
     console.log("empty ke andar to gye");
     return photo.length <= 2 ? DefaultplayerImage : photo;
