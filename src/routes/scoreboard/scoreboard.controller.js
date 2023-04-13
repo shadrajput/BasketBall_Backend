@@ -24,6 +24,10 @@ function getPlayerRankingPoints(tournament_level){
 }
 //***************************************************************
 
+const isAuthScorekeeper = catchAsyncErrors((req, res, next) => {
+    return res.status(200).json({success: true})
+})
+
 const startMatch = catchAsyncErrors(async(req, res, next)=>{
     const match_id = Number(req.params.match_id);
 
@@ -326,14 +330,13 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
     })
 
     //Updating current quarter
-    await prisma.match_quarters.update({
+    const prev_quarter = await prisma.match_quarters.update({
         where: {
             id: current_quarter.id
         },
         data:{
             won_by_team_id: quarter_won_by,
             status: 1,
-            is_undo_score: false,
         }
     })
 
@@ -342,7 +345,7 @@ const changeQuarter = catchAsyncErrors( async (req, res, next)=>{
     await prisma.match_quarters.create({
         data:{
             match_id,
-            is_undo_score: true,
+            is_undo_score: prev_quarter.is_undo_score,
             quarter_number: all_quarters.length,
             timeline_start_score_id: last_score_detail.id,
             timeline_end_score_id: last_score_detail.id
@@ -551,7 +554,7 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
         },
         data:{
             won_by_team_id: quarter_won_by,
-            status: 1,
+            status: 1,  
             is_undo_score: false,
         }
     })
@@ -585,7 +588,7 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
         match_won_team = match_details.team_2_id;
         match_lost_team = match_details.team_1_id;
     }
-
+    
             //updating won team in match table & tournament status to completed and is_details_editable to true
     await prisma.matches.update({
         where:{
@@ -594,16 +597,19 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
         data:{
             won_by_team_id: match_won_team,
             status: 3,
-            tournament_id:{
-                status: 3,
-                is_details_editable: true
-            },
-            quarters:{
+            quarters_held:{
                 increment: 1
             },
-            scorekeeper_id:{
-                token: null,
-            }
+        }
+    })
+
+    //updating token of the scorekeeper
+    await prisma.scorekeeper.update({
+        where:{
+            id: match_details.scorekeeper_id
+        },
+        data:{
+            token: null
         }
     })
 
@@ -627,22 +633,29 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
         })
 
             //updating won players matches played and won
-        await prisma.match_players.updateMany({ 
+        await prisma.player_statistics.updateMany({
             where: {
-                match_id,
-                team_id: match_won_team
-            },
-            data:{
-                player_id:{
-                    matches_played:{
-                        increment: 1
+                player_id: {
+                in: await prisma.match_players.findMany({
+                    where: {
+                        match_id,
+                        team_id: match_won_team
                     },
-                    matches_won:{
-                        increment: 1
+                    select: {
+                        player_id: true
                     }
+                }).then(matchPlayers => matchPlayers.map(mp => mp.player_id))
+                }
+            },
+            data: {
+                matches_played:{
+                    increment: 1
+                },
+                matches_won:{
+                    increment: 1
                 }
             }
-        })
+        });
 
         //For lost team
             //lost team
@@ -661,22 +674,29 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
         }) 
 
             //updating lost players matches played and lost
-        await prisma.match_players.updateMany({ 
+        await prisma.player_statistics.updateMany({
             where: {
-                match_id,
-                team_id: match_lost_team
-            },
-            data:{
-                player_id:{
-                    matches_played:{
-                        increment: 1
+                player_id: {
+                in: await prisma.match_players.findMany({
+                    where: {
+                        match_id,
+                        team_id: match_lost_team
                     },
-                    matches_lost:{
-                        increment: 1
+                    select: {
+                        player_id: true
                     }
+                }).then(matchPlayers => matchPlayers.map(mp => mp.player_id))
+                }
+            },
+            data: {
+                matches_played:{
+                    increment: 1
+                },
+                matches_lost:{
+                    increment: 1
                 }
             }
-        })
+        });
     }
     else{ //match draw
         //Only increase match played of both the teams
@@ -703,18 +723,23 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
         })
 
         //Only increase matches played of all players of both the teams
-        const all_match_players = await prisma.match_players.updateMany({ 
+        await prisma.player_statistics.updateMany({
             where: {
-                match_id,
-            },
-            data:{
-                player_id:{
-                    matches_played: {
-                        increment: 1
+                player_id: {
+                in: await prisma.match_players.findMany({
+                    where: {
+                        match_id,
+                    },
+                    select: {
+                        player_id: true
                     }
+                }).then(matchPlayers => matchPlayers.map(mp => mp.player_id))
                 }
+            },
+            data: {
+                matches_played: { increment: 1 }
             }
-        })
+        });
     }
 
 
@@ -749,5 +774,6 @@ module.exports = {
     playerFoul,
     changeQuarter,
     undoScore,
-    endMatch
+    endMatch,
+    isAuthScorekeeper
 }
