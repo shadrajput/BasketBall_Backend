@@ -48,7 +48,7 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
 
       if (files.logo && files.logo.originalFilename != "" && files.logo.size != 0) {
         const ext = files.logo.mimetype.split("/")[1].trim();
-        console.log(1)
+        
         if (files.logo.size >= 2000000) {
           // 2000000(bytes) = 2MB
           return next(
@@ -319,11 +319,7 @@ const tournamentSchedule = catchAsyncErrors(async(req, res, next)=>{
     where:{
       tournament_id: Number(tournament_id)
     },
-    orderBy: {
-      _count: {
-        created_at: 'desc'
-      }
-    }
+    orderBy: [{ _max: { created_at: 'desc' } }],
   })
   
   let schedule = [];
@@ -514,6 +510,33 @@ const disqualifyTeam = catchAsyncErrors(async (req, res, next) => {
     .json({ success: true, message: "Team disqualified successfully" });
 });
 
+const requalifyTeam = catchAsyncErrors(async (req, res, next) => {
+  const { tournament_id, team_id } = req.params;
+
+  const tournament_teams_id = await prisma.tournament_teams.findFirst({
+    where: {
+      AND: [
+        { tournament_id: Number(tournament_id) },
+        { team_id: Number(team_id) },
+        { is_selected: 1 },
+      ],
+    },
+  });
+
+  await prisma.tournament_teams.update({
+    where: {
+      id: tournament_teams_id.id,
+    },
+    data: {
+      is_disqualified: false
+    },
+  });
+
+  res
+    .status(200)
+    .json({ success: true, message: "Team requalified successfully" });
+});
+
 const isAuthenticOrganizer = (req, res) =>{
   res
     .status(200)
@@ -667,7 +690,7 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
       }
     }
 
-    //ROUND ROBIN formation
+    //ROUND ROBIN formation in pools
     if (formation_method == "league") {
       for (let i = 0; i < pools.length; i++) {
         const teams = await prisma.tournament_teams.findMany({
@@ -713,8 +736,105 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
           j++;
         }
       }
-    } else {
-      //KNOCKOUT formation
+    } 
+    else { //KNOCKOUT formation in pools
+
+      for (let j = 0; j < pools.length; j++) {
+        //Finding teams of a particular pools
+        const teams = await prisma.tournament_teams.findMany({
+          where: {
+            tournament_id,
+            is_selected: 1,
+            is_disqualified: false,
+            pool_name: pools[j].pool_name,
+            age_categories: {
+              hasEvery: [age_type],
+            },
+            gender_type: {
+              hasEvery: [gender_type],
+            },
+          },
+          include:{
+            teams: true
+          }
+        });
+
+        //Cheching if no. of teams is even or not
+        if(teams.length % 2 != 0){
+          return res.status(400).json({success: true, message: "Can't form match for odd teams in a pool"})
+        }
+
+        for (let i = 0; i + 1 < teams.length; i += 2) {
+          const match_data = await prisma.matches.create({
+            data: {
+              tournament_id,
+              team_1_id: teams[i].team_id,
+              team_2_id: teams[i + 1].team_id,
+              address: tournament_details.address,
+              round_name,
+            },
+          });
+
+          //Adding match players of team 1
+          await addMatchPlayers({match_id:match_data.id, team_id:teams[i].team_id,team_captain_id: teams[i].teams.captain_id})
+
+          //Adding match players of team 2
+          await addMatchPlayers({match_id:match_data.id, team_id:teams[i+1].team_id,team_captain_id: teams[i+1].teams.captain_id})
+        }
+      }
+
+    }
+
+    return res
+      .status(201)
+      .json({ success: true, message: "Matches formed successfully" });
+  }
+  else{
+    //ROUND ROBIN formation in without pools
+    if (formation_method == "league") {
+      const teams = await prisma.tournament_teams.findMany({
+        where: {
+          tournament_id,
+          is_selected: 1,
+          is_disqualified: false,
+          age_categories: {
+            hasEvery: [age_type],
+          },
+          gender_type: {
+            hasEvery: [gender_type],
+          },
+        },
+        include:{
+          teams: true
+        }
+      });
+
+      let j = 0,
+        k = 0;
+      while (j < teams.length) {
+        k = j + 1;
+        while (k < teams.length) {
+          const match_data = await prisma.matches.create({
+            data: {
+              tournament_id,
+              team_1_id: teams[j].team_id,
+              team_2_id: teams[k].team_id,
+              address: tournament_details.address,
+              round_name,
+            },
+          });
+
+          //Adding match players of team 1
+          await addMatchPlayers({match_id:match_data.id, team_id: teams[j].team_id,team_captain_id: teams[j].teams.captain_id})
+          //Adding match players of team 2
+          await addMatchPlayers({match_id:match_data.id, team_id: teams[k].team_id,team_captain_id: teams[k].teams.captain_id})
+          
+          k++;
+        }
+        j++;
+      }
+    }
+    else{ //KNOCKOUT formation without pools
 
       //checking if previously divided into upper half and lower half or not
       const result_teams = await prisma.tournament_teams.findMany({
@@ -733,14 +853,15 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
       });
 
       if (result_teams.length > 0) {
-        const upperhalf_teams = getKnockoutUpperLowerHalfTeams(
+       
+        const upperhalf_teams = await getKnockoutUpperLowerHalfTeams(
           tournament_id,
           age_type,
           gender_type,
           true
         );
 
-        const lowerhalf_teams = getKnockoutUpperLowerHalfTeams(
+        const lowerhalf_teams = await getKnockoutUpperLowerHalfTeams(
           tournament_id,
           age_type,
           gender_type,
@@ -759,11 +880,12 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
             },
           });
 
-          // //Adding match players of team 1
-          // await addMatchPlayers({match_id:match_data.id, team_id:upperhalf_teams[0].team_id,team_captain_id: upperhalf_teams[0].captain_id})
-          // //Adding match players of team 2
-          // await addMatchPlayers({match_id:match_data.id, team_id:lowerhalf_teams[0].team_id,team_captain_id: lowerhalf_teams[0].captain_id})
-        } else {
+          //Adding match players of team 1
+          await addMatchPlayers({match_id:match_data.id, team_id:upperhalf_teams[0].team_id,team_captain_id: upperhalf_teams[0].teams.captain_id})
+          //Adding match players of team 2
+          await addMatchPlayers({match_id:match_data.id, team_id:lowerhalf_teams[0].team_id,team_captain_id: lowerhalf_teams[0].teams.captain_id})
+        } 
+        else {
           //upperhalf match formation
           for (let i = 0; i + 1 < upperhalf_teams.length; i += 2) {
             const match_data = await prisma.matches.create({
@@ -776,11 +898,11 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
               },
             });
 
-            // //Adding match players of team 1
-            // await addMatchPlayers({match_id:match_data.id, team_id:upperhalf_teams[i].team_id,team_captain_id: upperhalf_teams[i].captain_id})
+            //Adding match players of team 1
+            await addMatchPlayers({match_id:match_data.id, team_id:upperhalf_teams[i].team_id,team_captain_id: upperhalf_teams[i].teams.captain_id})
 
-            // //Adding match players of team 2
-            // await addMatchPlayers({match_id:match_data.id, team_id:upperhalf_teams[i+1].team_id,team_captain_id: upperhalf_teams[i+1].captain_id})
+            //Adding match players of team 2
+            await addMatchPlayers({match_id:match_data.id, team_id:upperhalf_teams[i+1].team_id,team_captain_id: upperhalf_teams[i+1].teams.captain_id})
           }
 
           //lowerhalf match formation
@@ -795,14 +917,15 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
               },
             });
 
-            // //Adding match players of team 1
-            // await addMatchPlayers({match_id:match_data.id, team_id:lowerhalf_teams[i].team_id,team_captain_id: lowerhalf_teams[i].captain_id})
+            //Adding match players of team 1
+            await addMatchPlayers({match_id:match_data.id, team_id:lowerhalf_teams[i].team_id,team_captain_id: lowerhalf_teams[i].teams.captain_id})
 
-            // //Adding match players of team 2
-            // await addMatchPlayers({match_id:match_data.id, team_id:lowerhalf_teams[i+1].team_id,team_captain_id: lowerhalf_teams[i+1].captain_id})
+            //Adding match players of team 2
+            await addMatchPlayers({match_id:match_data.id, team_id:lowerhalf_teams[i+1].team_id,team_captain_id: lowerhalf_teams[i+1].teams.captain_id})
           }
         }
-      } else {
+      } 
+      else {
         const teams = await prisma.tournament_teams.findMany({
           where: {
             tournament_id,
@@ -815,6 +938,9 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
               hasEvery: [gender_type],
             },
           },
+          include:{
+            teams: true
+          }
         });
 
         let total_byes = 0,
@@ -886,20 +1012,6 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
           });
         }
 
-        // const upperhalf_teams = getKnockoutUpperLowerHalfTeams(
-        //   tournament_id,
-        //   age_type,
-        //   gender_type,
-        //   true
-        // );
-
-        // const lowerhalf_teams = getKnockoutUpperLowerHalfTeams(
-        //   tournament_id,
-        //   age_type,
-        //   gender_type,
-        //   false
-        // );
-
         //upper half teams (not bye) match formation
         for (
           let i = 0;
@@ -915,11 +1027,11 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
               round_name,
             },
           });
-          // //Adding match players of team 1
-          // await addMatchPlayers({match_id:match_data.id, team_id:upperhalf_teams[i].team_id,team_captain_id: upperhalf_teams[i].captain_id})
+          //Adding match players of team 1
+          await addMatchPlayers({match_id:match_data.id, team_id:upperhalf_teams[i].team_id,team_captain_id: upperhalf_teams[i].teams.captain_id})
 
-          // //Adding match players of team 2
-          // await addMatchPlayers({match_id:match_data.id, team_id:upperhalf_teams[i+1].team_id,team_captain_id: upperhalf_teams[i+1].captain_id})
+          //Adding match players of team 2
+          await addMatchPlayers({match_id:match_data.id, team_id:upperhalf_teams[i+1].team_id,team_captain_id: upperhalf_teams[i+1].teams.captain_id})
         }
 
         //lower half teams (not bye) match formation
@@ -937,16 +1049,16 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
               round_name,
             },
           });
-          // //Adding match players of team 1
-          // await addMatchPlayers({match_id:match_data.id, team_id:lowerhalf_teams[i].team_id,team_captain_id: lowerhalf_teams[i].captain_id})
+          //Adding match players of team 1
+          await addMatchPlayers({match_id:match_data.id, team_id:lowerhalf_teams[i].team_id,team_captain_id: lowerhalf_teams[i].teams.captain_id})
 
-          // //Adding match players of team 2
-          // await addMatchPlayers({match_id:match_data.id, team_id:lowerhalf_teams[i+1].team_id,team_captain_id: lowerhalf_teams[i+1].captain_id})
+          //Adding match players of team 2
+          await addMatchPlayers({match_id:match_data.id, team_id:lowerhalf_teams[i+1].team_id,team_captain_id: lowerhalf_teams[i+1].teams.captain_id})
         }
       }
     }
 
-    res
+    return res
       .status(201)
       .json({ success: true, message: "Matches formed successfully" });
   }
@@ -991,6 +1103,9 @@ async function getKnockoutUpperLowerHalfTeams(
         hasEvery: [gender_type],
       },
     },
+    include:{
+      teams: true
+    }
   });
 }
 
@@ -1009,6 +1124,7 @@ module.exports = {
   acceptTeamRequest,
   rejectTeamRequest,
   disqualifyTeam,
+  requalifyTeam,
   isAuthenticOrganizer,
   createPools,
   matchFormation,

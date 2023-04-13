@@ -18,6 +18,7 @@ const {
   acceptTeamRequest,
   rejectTeamRequest,
   disqualifyTeam,
+  requalifyTeam,
   isAuthenticOrganizer,
   createPools,
   matchFormation,
@@ -88,6 +89,12 @@ router.put(
   isAuthenticatedUser,
   isAuthTournamentOrganizer,
   disqualifyTeam
+);
+router.put(
+  "/requalify-team/:tournament_id/:team_id",
+  isAuthenticatedUser,
+  isAuthTournamentOrganizer,
+  requalifyTeam
 );
 
 router.get(
