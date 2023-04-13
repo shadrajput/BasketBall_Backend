@@ -79,7 +79,6 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
           next(error)
       }
 
-    console.log(gameInfo);
     myPromise.then(async () => {
       const player_data = await prisma.players.create({
         data: {

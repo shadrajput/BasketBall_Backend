@@ -90,6 +90,26 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+const matchList = catchAsyncErrors(async(req,res,next) => {
+  try {
+    const matches = await prisma.matches.findMany({
+      include:{
+        team_1  : true,
+        team_2  : true,
+        tournaments : true
+      }
+    });
+
+    res.status(200).json({
+      data: matches,
+      success: true,
+      message: "LiveMatch",
+    });
+  } catch (error) {
+    next(error)
+  }
+})
+
 const updateMatchDetails = catchAsyncErrors(async (req, res, next) => {
   const match_id = Number(req.params.match_id);
   const {
@@ -132,5 +152,6 @@ const updateMatchDetails = catchAsyncErrors(async (req, res, next) => {
 
 module.exports = {
   matchScore,
+  matchList,
   updateMatchDetails,
 };
