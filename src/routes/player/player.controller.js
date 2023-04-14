@@ -85,35 +85,35 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       next(error)
     }
 
-    // myPromise.then(async () => {
-    //   const player_data = await prisma.players.create({
-    //     data: {
-    //       user_id: 1,
-    //       photo: photo,
-    //       first_name: basicInfo.first_name,
-    //       middle_name: basicInfo.middle_name,
-    //       last_name: basicInfo.last_name,
-    //       alternate_mobile: basicInfo.alternate_mobile,
-    //       gender: basicInfo.gender,
-    //       height: Number(gameInfo.height),
-    //       weight: Number(gameInfo.weight),
-    //       pincode: basicInfo.pincode,
-    //       mobile: basicInfo.mobile,
-    //       playing_position: gameInfo.playing_position,
-    //       jersey_no: Number(gameInfo.jersey_no),
-    //       about: gameInfo.about,
-    //       date_of_birth: new Date(basicInfo.date_of_birth),
-    //     },
-    //   });
+    myPromise.then(async () => {
+      const player_data = await prisma.players.create({
+        data: {
+          user_id: 1,
+          photo: photo,
+          first_name: basicInfo.first_name,
+          middle_name: basicInfo.middle_name,
+          last_name: basicInfo.last_name,
+          alternate_mobile: basicInfo.alternate_mobile,
+          gender: basicInfo.gender,
+          height: Number(gameInfo.height),
+          weight: Number(gameInfo.weight),
+          pincode: basicInfo.pincode,
+          mobile: basicInfo.mobile,
+          playing_position: gameInfo.playing_position,
+          jersey_no: Number(gameInfo.jersey_no),
+          about: gameInfo.about,
+          date_of_birth: new Date(basicInfo.date_of_birth),
+        },
+      });
 
 
 
-    //   res.status(201).json({
-    //     data: player_data,
-    //     success: true,
-    //     message: "Player registration successful",
-    //   });
-    // });
+      res.status(201).json({
+        data: player_data,
+        success: true,
+        message: "Player registration successful",
+      });
+    });
   });
 });
 
