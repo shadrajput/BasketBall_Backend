@@ -73,7 +73,6 @@ async function deleteImage(name) {
 
   try {
     const imageID = await searchImage(image);
-    console.log(imageID);
     if (imageID) {
       await imagekit.deleteFile(imageID);
     }
