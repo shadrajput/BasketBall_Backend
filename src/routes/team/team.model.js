@@ -11,7 +11,7 @@ async function createTeam(teamData, logo, captain, userId) {
     asst_coach_mobile,
   } = teamData.TeamInfo;
 
-  return prisma.teams.create({
+  const teem = await prisma.teams.create({
     data: {
       logo,
       team_name,
@@ -24,6 +24,17 @@ async function createTeam(teamData, logo, captain, userId) {
       captain_id: Number(captain),
     },
   });
+
+  await prisma.users.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      is_manager: true,
+    },
+  });
+
+  return teem;
 }
 
 async function deleteTeamPlayer(teamID) {

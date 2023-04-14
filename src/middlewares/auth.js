@@ -60,15 +60,15 @@ exports.verifyScorekeeper = catchAsyncErrors(async (req, res, next) => {
   const match_id = Number(req.params.match_id);
   const token = req.params.token;
 
-  if (token == null || token == '') {
+  if (token == null || token == "") {
     return next(new ErrorHandler("Link expired", 400));
   }
 
   const match_detail = await prisma.matches.findFirst({
     where: {
       id: match_id,
-      scorekeeper:{
-        token
+      scorekeeper: {
+        token,
       },
     },
   });
@@ -94,7 +94,7 @@ exports.isAuthTeamManager = catchAsyncErrors(async (req, res, next) => {
 
   const user_team = await prisma.teams.findFirst({
     where: {
-      id: req.params.team_id,
+      id: Number(req.params.team_id),
       user_id: req.user.id,
     },
   });
@@ -103,7 +103,7 @@ exports.isAuthTeamManager = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Unauthorized access", 401));
   }
 
-  next()
+  next();
 });
 
 //Authentication for tournament organizer

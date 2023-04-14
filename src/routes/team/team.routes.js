@@ -7,14 +7,22 @@ const {
   httpGetTeamByUserId,
   httpPostTournament,
 } = require("./team.controller");
-const { isAuthenticatedUser } = require("../../middlewares/auth");
+const {
+  isAuthenticatedUser,
+  isAuthTeamManager,
+} = require("../../middlewares/auth");
 
 const teamRouter = express.Router();
 
 teamRouter.post("/registration", isAuthenticatedUser, httpTeamRegister);
 teamRouter.get("/list/:page&:TeamName", isAuthenticatedUser, httpGetAllTeams);
 teamRouter.get("/user/:userId", isAuthenticatedUser, httpGetTeamByUserId);
-teamRouter.put("/update", isAuthenticatedUser, httpUpdateTeam);
+teamRouter.put(
+  "/update/:team_id",
+  isAuthenticatedUser,
+  isAuthTeamManager,
+  httpUpdateTeam
+);
 teamRouter.post(
   "/tournament/register",
   isAuthenticatedUser,
