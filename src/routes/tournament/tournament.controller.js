@@ -4,6 +4,7 @@ const ErrorHandler = require("../../utils/ErrorHandler");
 const ImageKit = require("imagekit");
 const formidable = require("formidable");
 const fs = require("fs");
+const { deleteImage } = require("../../helper/imageUpload");
 
 const prisma = new PrismaClient();
 
@@ -13,9 +14,51 @@ const imagekit = new ImageKit({
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
 
+const uploadImage = async (image, next, folderName) =>{
+  const ext = image.mimetype.split("/")[1].trim();
+        
+  if (image.size >= 2000000) {
+    // 2000000(bytes) = 2MB
+    return next(
+      new ErrorHandler("Photo size should be less than 2MB", 400)
+    );
+  }
+  if (ext != "png" && ext != "jpg" && ext != "jpeg") {
+    return next(
+      new ErrorHandler("Only JPG, JPEG or PNG logo is allowed", 400)
+    );
+  }
+
+  var oldPath = image.filepath;
+  var fileName = Date.now() + "_" + image.originalFilename;
+
+  const fileData = fs.readFileSync(oldPath) 
+  if(fileData){
+    const result = await imagekit.upload({
+      file: fileData,
+      fileName: fileName,
+      overwriteFile: true,
+      folder: folderName,
+    });
+
+    if(!result.url){
+      return next(new ErrorHandler('Failed to upload image', 500));
+    }
+    
+    return result.url
+  }
+  else{
+    return next(new ErrorHandler('Failed to read image', 400));
+  }
+}
+
 const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
+    
+    fields.referees = JSON.parse(fields.referees)
+    fields.sponsors = JSON.parse(fields.sponsors)
+
     if (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
@@ -47,46 +90,18 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
     const myPromise = new Promise(async (resolve, reject) => {
 
       if (files.logo && files.logo.originalFilename != "" && files.logo.size != 0) {
-        const ext = files.logo.mimetype.split("/")[1].trim();
-        
-        if (files.logo.size >= 2000000) {
-          // 2000000(bytes) = 2MB
-          return next(
-            new ErrorHandler("Photo size should be less than 2MB", 400)
-          );
-        }
-        if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-          return next(
-            new ErrorHandler("Only JPG, JPEG or PNG logo is allowed", 400)
-          );
-        }
-
-        var oldPath = files.logo.filepath;
-        var fileName = Date.now() + "_" + files.logo.originalFilename;
-
-        fs.readFile(oldPath, function (err, data) {
-          if (err) {
-            return next(new ErrorHandler(err.message, 500));
-          }
-          imagekit.upload(
-            {
-              file: data,
-              fileName: fileName,
-              overwriteFile: true,
-              folder: "/tournament_images",
-            },
-            function (error, result) {
-              if (error) {
-                return next(new ErrorHandler(error.message, 500));
-              }
-              logo = result.url;
-              resolve();
-            }
-          );
-        });
-      } else {
-        resolve();
+        const imageUrl = await uploadImage(files.logo, next, "/tournament_images") 
+        logo = imageUrl;
       }
+      if(fields.sponsors.length > 0 && files.sponsors_logo0) {
+        for(let i = 0; i < fields.sponsors.length; i++){
+          const imageUrl = await uploadImage(files[`sponsors_logo${i}`], next, "/tournament_sponsors") 
+          fields.sponsors[i].logo = imageUrl;
+        }
+      }
+        
+      resolve();
+      
     });
 
     myPromise.then(async () => {
@@ -100,6 +115,8 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
         age_categories,
         level,
         prize,
+        referees,
+        sponsors
       } = fields;
 
       start_date = new Date(start_date);
@@ -107,7 +124,7 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
       gender_types = JSON.parse(gender_types);
       age_categories = JSON.parse(age_categories);
 
-      await prisma.tournaments.create({
+      const tournament_details =await prisma.tournaments.create({
         data: {
           user_id: Number(user_id),
           logo,
@@ -121,6 +138,26 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
           prize,
         },
       });
+
+      referees.map(async(referee)=>{
+        await prisma.tournament_referees.create({
+          data:{
+            tournament_id: tournament_details.id,
+            name: referee.name,
+            mobile: referee.mobile
+          }
+        })
+      })
+
+      sponsors.map(async(sponsor)=>{
+        await prisma.tournament_sponsors.create({
+          data:{
+            tournament_id: tournament_details.id,
+            title: sponsor.name,
+            logo: sponsor.logo
+          }
+        })
+      })
 
       res.status(201).json({
         success: true,
@@ -193,7 +230,7 @@ const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
         );
       }
 
-      if (files.logo.originalFilename != "" && files.logo.size != 0) {
+      if (files.logo && files.logo.originalFilename != "" && files.logo.size != 0) {
         const ext = files.logo.mimetype.split("/")[1].trim();
 
         if (files.logo.size >= 2000000) {
@@ -273,11 +310,88 @@ const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+const deleteTournament = catchAsyncErrors(async (req, res, next)=>{
+  const tournament_id = Number(req.params.tournament_id)
+
+  //checking if matches were created or not
+  const matches = await prisma.matches.findFirst({ 
+    where:{
+      tournament_id
+    }
+  })
+
+  if(matches){
+    return next(new ErrorHandler("Can't delete tournament", 400));
+  }
+
+  //Deleting the tournament teams
+  await prisma.tournament_teams.deleteMany({
+    where:{
+      tournament_id
+    }
+  })
+
+  //Deleting tournament referees
+  await prisma.tournament_referees.deleteMany({
+    where:{
+      tournament_id
+    }
+  })
+
+  //Finding tournament sponsors
+  const sponsors = await prisma.tournament_sponsors.findMany({
+    where:{
+      tournament_id
+    }
+  })
+
+  //deleting sponsors logos from imagekit
+  for(let i=0; i<sponsors.length; i++){
+    await deleteImage(sponsors[i].logo)
+  }
+
+  //Deleting tournament sponsors
+  await prisma.tournament_sponsors.deleteMany({
+    where:{
+      tournament_id
+    }
+  })
+
+  //Deleting tournament gallery images
+  const gallery = await prisma.gallery.findMany({
+    where:{
+      tournament_id
+    }
+  })
+
+   //deleting gallery images from imagekit
+  for(let i=0; i<gallery.length; i++){
+    await deleteImage(gallery[i].photo)
+  }
+
+  //Deleting tournament gallery
+  await prisma.gallery.deleteMany({
+    where:{
+      tournament_id
+    }
+  })
+
+  //Deleting tournament
+  await prisma.tournaments.delete({
+    where:{
+      id: tournament_id
+    }
+  })
+
+  res.status(200).json({ success: true, message: 'Tournament deleted successfully' });
+
+})
+
 const tournamentDetails = catchAsyncErrors(async (req, res, next) => {
   const { tournament_id } = req.params;
 
   const tournamentDetails = await prisma.tournaments.findFirst({
-    where: { id: Number(tournament_id), is_approved: true },
+    where: { id: Number(tournament_id)},
     include: {
       tournament_sponsors: true,
       tournament_referees: true,
@@ -1114,6 +1228,7 @@ module.exports = {
   allTournaments,
   tournamentOfOrganizer,
   updateTournamentDetails,
+  deleteTournament,
   tournamentDetails,
   tournamentSchedule,
   startRegistration,

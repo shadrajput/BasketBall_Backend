@@ -8,6 +8,7 @@ const {
   allTournaments,
   tournamentOfOrganizer,
   updateTournamentDetails,
+  deleteTournament,
   tournamentDetails,
   tournamentSchedule,
   startRegistration,
@@ -36,6 +37,7 @@ router.get("/details/:tournament_id", isAuthenticatedUser, tournamentDetails);
 
 router.get("/schedule/:tournament_id", tournamentSchedule);
 
+router.delete("/delete/:tournament_id", isAuthenticatedUser, deleteTournament);
 router.put(
   "/update/:tournament_id",
   isAuthenticatedUser,
