@@ -13,8 +13,8 @@ router.post("/add",
 // isAuthenticatedUser, 
 addnews);
 router.get("/", allNews);
-router.get("/:id", oneNewsDetails);
-router.put("/update/:id", isAuthenticatedUser, updateNewsDetails);
+router.get( "/details/:id", oneNewsDetails);
+router.put("/update", isAuthenticatedUser, updateNewsDetails);
 router.delete("/delete/:id", isAuthenticatedUser, deleteNewsDetails);
 
 module.exports = router;

@@ -7,7 +7,7 @@ const {
     uploadImage,
     deleteImage,
     DefaultplayerImage,
-  } = require("../../helper/imageUpload");
+} = require("../../helper/imageUpload");
 
 const prisma = new PrismaClient();
 
@@ -25,62 +25,29 @@ const addnews = catchAsyncErrors(async (req, res, next) => {
 
     const form = new formidable.IncomingForm();
     form.parse(req, async function (err, fields, files) {
-        console.log(fields)
         try {
+
+            const NewsInfo = JSON.parse(fields?.data);
             if (err) {
                 return res.status(500).json({ success: false, message: err.message });
             }
-    
             let photo = "";
             photo = await uploadLogo(files, photo);
-            // const myPromise = new Promise(async (resolve, reject) => {
-            //     // if (files.photo.originalFilename != "" && files.photo.size != 0) {
-            //     //     const ext = files.photo.mimetype.split("/")[1].trim();
-    
-            //     //     if (files.photo.size >= 2000000) {
-            //     //         // 2000000(bytes) = 2MB
-            //     //         return next(new ErrorHandler('Photo size should be less than 2MB', 400));
-            //     //     }
-            //     //     if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-            //     //         return next(new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400));
-            //     //     }
-    
-            //     //     var oldPath = files.photo.filepath;
-            //     //     var fileName = Date.now() + "_" + files.photo.originalFilename;
-    
-            //     //     fs.readFile(oldPath, function (err, data) {
-            //     //         if (err) {
-            //     //             return next(new ErrorHandler(err.message, 500));
-            //     //         }
-            //     //         imagekit.upload({
-            //     //             file: data,
-            //     //             fileName: fileName,
-            //     //             overwriteFile: true,
-            //     //             folder: '/player_images'
-            //     //         }, function (error, result) {
-            //     //             if (error) {
-            //     //                 return next(new ErrorHandler(error.message, 500));
-            //     //             }
-            //     //             photo = result.url
-            //     //             resolve();
-            //     //         });
-            //     //     });
-            //     // }
-            //     // else {
-            //     //     resolve()
-            //     // }
-    
-            // })
             const data = await prisma.news.create({
                 data: {
                     photo: photo,
-                    title: title,
-                    description: description,
-                    created_at: created_at
-                }
-            }) 
+                    title: NewsInfo.NewsInfo.title,
+                    description: NewsInfo.NewsInfo.description,
+                },
+            });
+
+            res.status(201).json({
+                data: data,
+                success: true,
+                message: "News Added successfull.",
+            });
         } catch (error) {
-                console.log(error)
+            next(error)
         }
 
 
@@ -122,9 +89,10 @@ const oneNewsDetails = catchAsyncErrors(async (req, res, next) => {
 
     const oneNewsDetails = await prisma.news.findFirst({
         where: {
-            id: Number(id)
+            id: id
         }
     })
+
     res.status(200).json({
         oneNewsDetails: oneNewsDetails,
         success: true,
@@ -184,18 +152,8 @@ const deleteNewsDetails = catchAsyncErrors(async (req, res, next) => {
 // ------------------ Upload_image -------------------
 // ----------------------------------------------------
 async function uploadLogo(files, photo) {
-    // console.log(files)
-    // if (!files || !files.logo) {
-    //     console.log("empty ke andar to gye");
-    //     return photo.length <= 2 ? DefaultplayerImage : photo;
-    // }
-    console.log("New Image upload kia")
     try {
-        if (photo && photo != DefaultplayerImage) {
-            console.log("yaha to ja raha he");
-            await deleteImage(photo);
-        }
-        return await uploadImage(files.logo, "player_image");
+        return await uploadImage(files.photo, "player_image");
     } catch (error) {
         throw new Error(error.message);
     }
