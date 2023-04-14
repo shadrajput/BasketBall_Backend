@@ -1,7 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-async function createTeam(teamData, logo, captain) {
+async function createTeam(teamData, logo, captain, userId) {
   const {
     team_name,
     about_team,
@@ -20,7 +20,7 @@ async function createTeam(teamData, logo, captain) {
       coach_mobile,
       asst_coach_name,
       asst_coach_mobile,
-      user_id: 1,
+      user_id: userId,
       captain_id: Number(captain),
     },
   });
@@ -38,7 +38,7 @@ async function updateTeam({ id, data, logo, captain }) {
   const {
     team_name,
     coach_name,
-    coach_mobile, 
+    coach_mobile,
     asst_coach_name,
     asst_coach_mobile,
   } = data;

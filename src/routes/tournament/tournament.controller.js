@@ -329,8 +329,8 @@ const tournamentSchedule = catchAsyncErrors(async (req, res, next) => {
 
   let schedule = [];
 
-  if(rounds[0]?.round_name != null){
-    for(let i =0; i<rounds.length; i++) {
+  if (rounds[0]?.round_name != null) {
+    for (let i = 0; i < rounds.length; i++) {
       const match_details = await prisma.matches.findMany({
         where: {
           round_name: rounds[i].round_name,

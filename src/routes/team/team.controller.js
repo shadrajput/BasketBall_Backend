@@ -17,6 +17,7 @@ const prisma = new PrismaClient();
 
 async function httpTeamRegister(req, res, next) {
   try {
+    const userId = req.user.id;
     const formData = await parseFormData(req);
     const teamData = JSON.parse(formData?.fields?.data);
     console.log(teamData);
@@ -36,7 +37,7 @@ async function httpTeamRegister(req, res, next) {
     }
     let logo = "";
     logo = await uploadLogo(formData, logo);
-    const team = await createTeam(teamData, logo, captain);
+    const team = await createTeam(teamData, logo, captain, userId);
     const teamPlayers = await createTeamPlayers(teamData.PlayerList, team.id);
 
     return res.status(201).json({ success: true, team, players: teamPlayers });
@@ -134,7 +135,7 @@ async function httpPostTournament(req, res) {
 }
 
 async function httpGetTeamByUserId(req, res, next) {
-  const userId = req.params.userId;
+  const userId = req.user.id;
 
   try {
     const teams = await prisma.teams.findMany({

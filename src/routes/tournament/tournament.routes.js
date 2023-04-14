@@ -26,9 +26,8 @@ const router = express.Router();
 
 router.post("/registration", isAuthenticatedUser, tournamentRegistration);
 
-router.get("/", 
-isAuthenticatedUser, allTournaments);
- 
+router.get("/", isAuthenticatedUser, allTournaments);
+
 router.get("/organizer", isAuthenticatedUser, tournamentOfOrganizer);
 
 router.get("/details/:tournament_id", isAuthenticatedUser, tournamentDetails);
@@ -94,7 +93,7 @@ router.get(
   "/auth-organizer/:tournament_id",
   isAuthenticatedUser,
   isAuthTournamentOrganizer,
-  isAuthenticOrganizer,
+  isAuthenticOrganizer
 );
 
 router.put(
@@ -109,6 +108,5 @@ router.put(
   isAuthTournamentOrganizer,
   matchFormation
 );
-
 
 module.exports = router;
