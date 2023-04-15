@@ -24,9 +24,72 @@ const imagekit = new ImageKit({
 const playerRegistration = catchAsyncErrors(async (req, res, next) => {
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
-    try {
-      if (err) {
-        return res.status(500).json({ success: false, message: err.message });
+
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+    const playerData = JSON.parse(fields?.data);
+    const { basicInfo, gameInfo } = playerData.PlayerInfo;
+
+    const result = await prisma.players.findFirst({
+      where: {
+        AND: [
+          {
+            mobile: {
+              contains: basicInfo.mobile,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+    });
+
+    if (result) {
+      return next(new ErrorHandler("Please Change Mobile Number"));
+    }
+
+    let photo = "";
+    const myPromise = new Promise(async (resolve, reject) => {
+      if (files.photo) {
+        const ext = files.photo.mimetype.split("/")[1].trim();
+
+        if (files.photo.size >= 2000000) {
+          // 2000000(bytes) = 2MB
+          return next(
+            new ErrorHandler("Photo size should be less than 2MB", 400)
+          );
+        }
+        if (ext != "png" && ext != "jpg" && ext != "jpeg") {
+          return next(
+            new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400)
+          );
+        }
+
+        var oldPath = files.photo.filepath;
+        var fileName = Date.now() + "_" + files.photo.originalFilename;
+
+        fs.readFile(oldPath, function (err, data) {
+          if (err) {
+            return next(new ErrorHandler(error.message, 500));
+          }
+          imagekit.upload(
+            {
+              file: data,
+              fileName: fileName,
+              overwriteFile: true,
+              folder: "/player_images",
+            },
+            function (error, result) {
+              if (error) {
+                return next(new ErrorHandler(error.message, 500));
+              }
+              photo = result.url;
+              resolve();
+            }
+          );
+        });
+      } else {
+        resolve();
       }
 
       const playerData = JSON.parse(fields?.data);
@@ -81,37 +144,34 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
         success: true,
         message: "Registration successfull.",
       });
-    } catch (error) {
-      next(error)
-    }
-
-    myPromise.then(async () => {
-      const player_data = await prisma.players.create({
-        data: {
-          user_id: 1,
-          photo: photo,
-          first_name: basicInfo.first_name,
-          middle_name: basicInfo.middle_name,
-          last_name: basicInfo.last_name,
-          alternate_mobile: basicInfo.alternate_mobile,
-          gender: basicInfo.gender,
-          height: Number(gameInfo.height),
-          weight: Number(gameInfo.weight),
-          pincode: basicInfo.pincode,
-          mobile: basicInfo.mobile,
-          playing_position: gameInfo.playing_position,
-          jersey_no: Number(gameInfo.jersey_no),
-          about: gameInfo.about,
-          date_of_birth: new Date(basicInfo.date_of_birth),
-        },
-      });
 
 
+      myPromise.then(async () => {
+        const player_data = await prisma.players.create({
+          data: {
+            user_id: 1,
+            photo: photo,
+            first_name: basicInfo.first_name,
+            middle_name: basicInfo.middle_name,
+            last_name: basicInfo.last_name,
+            alternate_mobile: basicInfo.alternate_mobile,
+            gender: basicInfo.gender,
+            height: Number(gameInfo.height),
+            weight: Number(gameInfo.weight),
+            pincode: basicInfo.pincode,
+            mobile: basicInfo.mobile,
+            playing_position: gameInfo.playing_position,
+            jersey_no: Number(gameInfo.jersey_no),
+            about: gameInfo.about,
+            date_of_birth: new Date(basicInfo.date_of_birth),
+          },
+        });
 
-      res.status(201).json({
-        data: player_data,
-        success: true,
-        message: "Player registration successful",
+        res.status(201).json({
+          data: player_data,
+          success: true,
+          message: "Player registration successful",
+        });
       });
     });
   });
@@ -121,8 +181,8 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 // -------------------- all_Player --------------------
 // ----------------------------------------------------
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
-  let { page, PlayerName } = req.params;
-  PlayerName = PlayerName == "search" ? "" : PlayerName;
+  const NoofPlayer = 10;
+
   try {
     const all_players = await prisma.players.findMany({
       skip: page * 10,
@@ -135,7 +195,7 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
       },
       include: {
         player_statistics: {
-          orderBy: { points: "desc" }
+          orderBy: { points: "desc" },
         },
         users: true,
         team_players: {
@@ -145,7 +205,18 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
         },
       },
     });
-    return res.status(200).json({ success: true, data: all_players });
+
+    const sortedData = all_players.sort(
+      (a, b) => b.player_statistics[0].points - a.player_statistics[0].points
+    );
+
+    const startIndex = (1 - 1) * NoofPlayer;
+    const endIndex = startIndex + NoofPlayer;
+
+    // Slice the array to get the current page
+    const currentArray = sortedData.slice(startIndex, endIndex);
+
+    return res.status(200).json({ success: true, data: currentArray });
   } catch (error) {
     next(error);
   }
@@ -183,9 +254,8 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
       message: "Single player details",
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
-
 });
 
 // ----------------------------------------------------
@@ -193,6 +263,7 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
   let { number } = req.params;
+  console.log(number);
   number = number.length < 4 ? "" : number;
   try {
     const SinglePlayerDetails = await prisma.players.findFirst({
@@ -206,62 +277,79 @@ const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
-
 });
 
 // ----------------------------------------------------
 // ------------------ Update_Player -------------------
 // ----------------------------------------------------
 const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
-
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
 
-    try {
-      if (err) {
-        return res.status(500).json({ success: false, message: err.message });
+    if (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+
+    //Deleting old photo
+    imagekit.deleteFile(old_photo_fileId, function (error, result) {
+      if (error) {
+        return next(
+          new ErrorHandler("Failed to update photo", 500)
+        );
+      }
+    });
+    if (files.photo.originalFilename != "" && files.photo.size != 0) {
+      const ext = files.photo.mimetype.split("/")[1].trim();
+
+      if (files.photo.size >= 2000000) {
+        // 2000000(bytes) = 2MB
+        return next(
+          new ErrorHandler("Photo size should be less than 2MB", 400)
+        );
+      }
+      if (ext != "png" && ext != "jpg" && ext != "jpeg") {
+        return next(
+          new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400)
+        );
       }
 
-      const playerData = JSON.parse(fields?.data);
-      const { basicInfo, gameInfo } = playerData.PlayerInfo;
-      let photo = basicInfo?.photo?.length ? basicInfo?.photo : ""
-      photo = await uploadLogo(files, photo);
-      const data = await prisma.players.update({
-        where: {
-          id: Number(basicInfo.id)
-        },
-        data: {
-          first_name: basicInfo.first_name,
-          photo,
-          middle_name: basicInfo.middle_name,
-          last_name: basicInfo.last_name,
-          mobile: Number(basicInfo.mobile),
-          alternate_mobile: basicInfo.alternate_mobile,
-          gender: basicInfo.gender,
-          height: Number(gameInfo.height),
-          weight: Number(gameInfo.weight),
-          pincode: basicInfo.pincode,
-          mobile: basicInfo.mobile,
-          playing_position: gameInfo.playing_position,
-          jersey_no: Number(gameInfo.jersey_no),
-          about: gameInfo.about,
-          date_of_birth: new Date(basicInfo.date_of_birth),
-        },
-      });
+      var oldPath = files.photo.filepath;
+      var fileName = Date.now() + "_" + files.photo.originalFilename;
 
-      res.status(201).json({
-        data: data,
-        success: true,
-        message: "Player Details Update Successfull.",
+      fs.readFile(oldPath, function (err, data) {
+        if (err) {
+          return next(new ErrorHandler(err.message, 500));
+        }
+        imagekit.upload(
+          {
+            file: data,
+            fileName: fileName,
+            overwriteFile: true,
+            folder: "/player_images",
+          },
+          function (error, result) {
+            if (error) {
+              return next(new ErrorHandler(error.message, 500));
+            }
+            photo = result.url;
+            resolve();
+          }
+        );
       });
-
-    } catch (error) {
-      next(error)
+    } else {
+      resolve();
     }
   });
+
+  res.status(201).json({
+    data: data,
+    success: true,
+    message: "Player Details Update Successfull.",
+  });
 });
+
 
 // ----------------------------------------------------
 // ------------------ Delete_Player -------------------
@@ -281,9 +369,8 @@ const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
       message: "Player details deleted",
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
-
 });
 
 

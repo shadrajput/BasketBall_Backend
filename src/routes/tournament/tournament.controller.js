@@ -180,17 +180,17 @@ const allTournaments = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, all_tournaments });
 });
 
-const tournamentOfOrganizer = catchAsyncErrors(async(req, res, next) => {
-  const user_id = req.user.id
+const tournamentOfOrganizer = catchAsyncErrors(async (req, res, next) => {
+  const user_id = req.user.id;
 
   const tournaments = await prisma.tournaments.findMany({
-    where:{
-      user_id
-    }
-  })
+    where: {
+      user_id,
+    },
+  });
 
   res.status(200).json({ success: true, tournaments });
-})
+});
 
 const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
   const form = new formidable.IncomingForm();
@@ -399,17 +399,17 @@ const tournamentDetails = catchAsyncErrors(async (req, res, next) => {
           is_selected: 1,
         },
         include: {
-          teams: true
-        }
+          teams: true,
+        },
       },
       matches: {
-        include:{
+        include: {
           tournaments: true,
           match_quarters: true,
           team_1:  true,
           team_2: true,
           won_by_team: true,
-        }
+        },
       },
       gallery: true,
       users: true,
@@ -423,43 +423,42 @@ const tournamentDetails = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, tournamentDetails });
 });
 
-const tournamentSchedule = catchAsyncErrors(async(req, res, next)=>{
+const tournamentSchedule = catchAsyncErrors(async (req, res, next) => {
   const { tournament_id } = req.params;
 
-  
   const rounds = await prisma.matches.groupBy({
-    by: ['round_name'],
-    where:{
-      tournament_id: Number(tournament_id)
+    by: ["round_name"],
+    where: {
+      tournament_id: Number(tournament_id),
     },
     orderBy: [{ _max: { created_at: 'desc' } }],
   })
   
   let schedule = [];
 
-  if(rounds[0]?.round_name != null){
-    for(let i =0; i<rounds.length; i++) {
+  if (rounds[0]?.round_name != null) {
+    for (let i = 0; i < rounds.length; i++) {
       const match_details = await prisma.matches.findMany({
-        where:{
-          round_name: rounds[i].round_name
+        where: {
+          round_name: rounds[i].round_name,
         },
-        include:{
+        include: {
           team_1: true,
           team_2: true,
         },
-        orderBy:{
-          created_at: "desc"
-        }
-      })
-      
-      schedule.push({ 
+        orderBy: {
+          created_at: "desc",
+        },
+      });
+
+      schedule.push({
         round_name: rounds[i].round_name,
-        matches: match_details
-      })
+        matches: match_details,
+      });
     }
   }
 
-  return res.status(200).json({ success: true, schedule })
+  return res.status(200).json({ success: true, schedule });
 });
 
 const startRegistration = catchAsyncErrors(async (req, res, next) => {
@@ -505,7 +504,7 @@ const startTournament = catchAsyncErrors(async (req, res, next) => {
     data: {
       status: 2, //2 == live
       is_details_editable: false,
-      is_registration_open: false
+      is_registration_open: false,
     },
   });
 
@@ -542,7 +541,7 @@ const teamsRequests = catchAsyncErrors(async (req, res, next) => {
     },
     include: {
       teams: true,
-    }
+    },
   });
 
   res.status(200).json({ success: true, teams });
@@ -568,13 +567,15 @@ const acceptTeamRequest = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  res.status(200).json({ success: true, message: 'Team selected successfully' });
+  res
+    .status(200)
+    .json({ success: true, message: "Team selected successfully" });
 });
 
 const rejectTeamRequest = catchAsyncErrors(async (req, res, next) => {
   const tournament_id = Number(req.params.tournament_id);
   const team_id = Number(req.body.team_id);
-  const reject_reason = req.body.reject_reason
+  const reject_reason = req.body.reject_reason;
 
   const tournament_team = await prisma.tournament_teams.findFirst({
     where: {
@@ -593,7 +594,9 @@ const rejectTeamRequest = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  res.status(200).json({ success: true, message: 'Team rejected successfully' });
+  res
+    .status(200)
+    .json({ success: true, message: "Team rejected successfully" });
 });
 
 const disqualifyTeam = catchAsyncErrors(async (req, res, next) => {
@@ -614,7 +617,7 @@ const disqualifyTeam = catchAsyncErrors(async (req, res, next) => {
       id: tournament_teams_id.id,
     },
     data: {
-      is_disqualified: true
+      is_disqualified: true,
     },
   });
 
@@ -687,8 +690,13 @@ const createPools = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  if (all_teams.length%teams_per_group != 0){
-    return next(new ErrorHandler(`Can't make pools with ${teams_per_group} teams per group`, 400));
+  if (all_teams.length % teams_per_group != 0) {
+    return next(
+      new ErrorHandler(
+        `Can't make pools with ${teams_per_group} teams per group`,
+        400
+      )
+    );
   }
 
   //shuffling the teams in an array
@@ -720,15 +728,14 @@ const createPools = catchAsyncErrors(async (req, res, next) => {
     if (count == teams_per_group) {
       count = 1;
       j++;
-    }
-    else{
+    } else {
       count++;
     }
   }
 
-   res
+  res
     .status(200)
-    .json({ success: true, message: 'Pools created successfully'});
+    .json({ success: true, message: "Pools created successfully" });
 });
 
 const matchFormation = catchAsyncErrors(async (req, res, next) => {
@@ -744,8 +751,8 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
   });
 
   //checking if the registration is open
-  if(tournament_details.is_registration_open){
-      return next(new ErrorHandler("Please close the registration", 400))
+  if (tournament_details.is_registration_open) {
+    return next(new ErrorHandler("Please close the registration", 400));
   }
 
   //checking if teams are available as per selected age_category
@@ -758,10 +765,10 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
         hasEvery: [age_type],
       },
     },
-  })
+  });
 
-  if(tour_teams_age_wise.length == 0){
-    return next(new ErrorHandler('No teams for selected age category', 400))
+  if (tour_teams_age_wise.length == 0) {
+    return next(new ErrorHandler("No teams for selected age category", 400));
   }
 
   //checking if teams are available as per selected gender_type
@@ -774,10 +781,10 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
         hasEvery: [gender_type],
       },
     },
-  })
+  });
 
-  if(tour_teams_gender_wise.length == 0){
-    return next(new ErrorHandler('No teams for selected gender type', 400))
+  if (tour_teams_gender_wise.length == 0) {
+    return next(new ErrorHandler("No teams for selected gender type", 400));
   }
 
   if (is_formation_by_group) {
@@ -791,14 +798,13 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
     });
 
     //checking if pools are created or not
-    if(pools.length == 1 && pools[0].pool_name == null){
-      return next(new ErrorHandler("Please create pools", 400))
-    }
-    else{
+    if (pools.length == 1 && pools[0].pool_name == null) {
+      return next(new ErrorHandler("Please create pools", 400));
+    } else {
       //checking if any team not allocated to pool
-      for(let i=0; i<pools.length; i++){
-        if(pools[i].pool_name == null){
-          return next(new ErrorHandler("Please create pools again", 400))
+      for (let i = 0; i < pools.length; i++) {
+        if (pools[i].pool_name == null) {
+          return next(new ErrorHandler("Please create pools again", 400));
         }
       }
     }
@@ -824,20 +830,20 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
           }
         });
 
-        let j = 0,
-          k = 0;
-        while (j < teams.length) {
-          k = j + 1;
-          while (k < teams.length) {
-            const match_data = await prisma.matches.create({
-              data: {
-                tournament_id,
-                team_1_id: teams[j].team_id,
-                team_2_id: teams[k].team_id,
-                address: tournament_details.address,
-                round_name,
-              },
-            });
+      let j = 0,
+        k = 0;
+      while (j < teams.length) {
+        k = j + 1;
+        while (k < teams.length) {
+          const match_data = await prisma.matches.create({
+            data: {
+              tournament_id,
+              team_1_id: teams[j].team_id,
+              team_2_id: teams[k].team_id,
+              address: tournament_details.address,
+              round_name,
+            },
+          });
 
             //Adding match players of team 1
             await addMatchPlayers({match_id:match_data.id, team_id: teams[j].team_id,team_captain_id: teams[j].teams.captain_id})
@@ -1075,30 +1081,22 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
         //Finding upper half and lower half total bye teams
         let upper_half_bye_teams =
           total_byes == 0
-          ?
-           0
-          :
-            total_byes % 2 != 0 
-            ? 
-              (total_byes - 1) / 2 
-            : 
-              total_byes / 2;
+            ? 0
+            : total_byes % 2 != 0
+            ? (total_byes - 1) / 2
+            : total_byes / 2;
         let lower_half_bye_teams =
           total_byes == 0
-          ?
-            0
-          :
-            total_byes % 2 != 0 
-            ? 
-              (total_byes + 1) / 2 
-            : 
-              total_byes / 2;
+            ? 0
+            : total_byes % 2 != 0
+            ? (total_byes + 1) / 2
+            : total_byes / 2;
 
         //Dividing teams array in upper-half and lower-half
         const upperhalf_teams = teams.slice(0, upper_half_total_teams);
         const lowerhalf_teams = teams.slice(
           upper_half_total_teams,
-          upper_half_total_teams + lower_half_total_teams 
+          upper_half_total_teams + lower_half_total_teams
         );
 
         //updating upperhalf
@@ -1178,23 +1176,23 @@ const matchFormation = catchAsyncErrors(async (req, res, next) => {
 });
 
 //Helper functions
-async function addMatchPlayers({match_id, team_id, team_captain_id}){
-  const players = await prisma.team_players.findMany({ 
-    where:{
-      team_id
-    }
-  })
-  
-  players.map(async(player)=>{
+async function addMatchPlayers({ match_id, team_id, team_captain_id }) {
+  const players = await prisma.team_players.findMany({
+    where: {
+      team_id,
+    },
+  });
+
+  players.map(async (player) => {
     await prisma.match_players.create({
-      data:{
+      data: {
         match_id,
         team_id,
         player_id: player.player_id,
-        is_captain: player.player_id == team_captain_id ? true : false
-      }
-    })
-  })
+        is_captain: player.player_id == team_captain_id ? true : false,
+      },
+    });
+  });
 }
 
 async function getKnockoutUpperLowerHalfTeams(
