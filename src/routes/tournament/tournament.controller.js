@@ -196,96 +196,78 @@ const tournamentOfOrganizer = catchAsyncErrors(async (req, res, next) => {
 const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
-    if (err) {
-      return res.status(500).json({ success: false, message: err.message });
-    }
 
+    // console.log(fields);
+    // return res.json({success: true, message: 'ok'})
+    fields.referees = JSON.parse(fields.referees)
+    fields.sponsors = JSON.parse(fields.sponsors)
+
+    if (err) {
+      return next(new ErrorHandler(err.message, 500));
+    }
+    
     let logo = "";
     const myPromise = new Promise(async (resolve, reject) => {
       //Searching and deleting old photo from imagekit
-      if (fields.old_logo_url != fields.logo_name) {
-        //Searching old photo
-        const old_logo_name = fields.old_logo_url.split("/")[5];
-        let old_logo_fileId = "";
+      // if (fields.old_logo_url != fields.logo_name) {
+      //   //Searching old photo
+      //   const old_logo_name = fields.old_logo_url.split("/")[5];
+      //   let old_logo_fileId = "";
 
-        imagekit.listFiles(
-          {
-            searchQuery: `'name'="${old_logo_name}"`,
-          },
-          function (error, result) {
-            if (error) {
-              return next(new ErrorHandler("Failed to update logo", 500));
-            }
-            if (result && result.length > 0) {
-              old_logo_fileId = result[0].fileId;
+      //   imagekit.listFiles(
+      //     {
+      //       searchQuery: `'name'="${old_logo_name}"`,
+      //     },
+      //     function (error, result) {
+      //       if (error) {
+      //         return next(new ErrorHandler("Failed to update logo", 500));
+      //       }
+      //       if (result && result.length > 0) {
+      //         old_logo_fileId = result[0].fileId;
 
-              //Deleting old photo
-              imagekit.deleteFile(old_logo_fileId, function (error, result) {
-                if (error) {
-                  return next(new ErrorHandler("Failed to update logo", 500));
-                }
-              });
-            }
-          }
-        );
-      }
+      //         //Deleting old photo
+      //         imagekit.deleteFile(old_logo_fileId, function (error, result) {
+      //           if (error) {
+      //             return next(new ErrorHandler("Failed to update logo", 500));
+      //           }
+      //         });
+      //       }
+      //     }
+      //   );
+      // }
 
       if (files.logo && files.logo.originalFilename != "" && files.logo.size != 0) {
-        const ext = files.logo.mimetype.split("/")[1].trim();
-
-        if (files.logo.size >= 2000000) {
-          // 2000000(bytes) = 2MB
-          return next(
-            new ErrorHandler("Photo size should be less than 2MB", 400)
-          );
-        }
-        if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-          return next(
-            new ErrorHandler("Only JPG, JPEG or PNG logo is allowed", 400)
-          );
-        }
-
-        var oldPath = files.logo.filepath;
-        var fileName = Date.now() + "_" + files.logo.originalFilename;
-
-        fs.readFile(oldPath, function (err, data) {
-          if (err) {
-            return next(new ErrorHandler(err.message, 500));
-          }
-          imagekit.upload(
-            {
-              file: data,
-              fileName: fileName,
-              overwriteFile: true,
-              folder: "/tournament_images",
-            },
-            function (error, result) {
-              if (error) {
-                return next(new ErrorHandler(error.message, 500));
-              }
-              logo = result.url;
-              resolve();
-            }
-          );
-        });
-      } else {
-        resolve();
+        const imageUrl = await uploadImage(files.logo, next, "/tournament_images") 
+        logo = imageUrl;
       }
+
+      // if(fields.sponsors.length > 0 && files.sponsors_logo0) {
+      //   for(let i = 0; i < fields.sponsors.length; i++){
+      //     const imageUrl = await uploadImage(files[`sponsors_logo${i}`], next, "/tournament_sponsors") 
+      //     fields.sponsors[i].logo = imageUrl;
+      //   }
+      // }
+        
+      resolve();
+      
     });
 
     myPromise.then(async () => {
-      const { tournament_id } = req.params;
-
+      const tournament_id = Number(req.params.tournament_id);
       const {
         tournament_name,
         address,
         start_date,
         end_date,
-        gender_types,
-        age_categories,
         level,
         prize,
+        about,
+        referees,
+        sponsors
       } = fields;
+
+      let gender_types = JSON.parse(fields.gender_types);
+      let age_categories = JSON.parse(fields.age_categories);
 
       await prisma.tournaments.update({
         where: {
@@ -293,15 +275,75 @@ const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
         },
         data: {
           tournament_name,
+          logo: logo !== '' ? logo : undefined,
           address,
           start_date: new Date(start_date), //date should be in YYYY-mm-dd format
           end_date: new Date(end_date),
           gender_types,
           age_categories,
+          about,
           level,
           prize,
         },
       });
+
+      //Deleting tournament referees
+      await prisma.tournament_referees.deleteMany({
+        where:{
+          tournament_id
+        }
+      })
+
+      //Adding tournament referees
+      for(let i=0; i< referees.length; i++) {
+        await prisma.tournament_referees.create({
+          data:{
+            name: referees[i].name,
+            mobile: referees[i].mobile,
+            tournament_id
+          }
+        })
+      }
+
+      //Uploading logo of sponsors
+      for(let i=0; i< sponsors.length; i++){
+        if (Object.keys(sponsors[i].logo).length == 0) {
+          //upload new logo
+          const imageUrl = await uploadImage(files[`sponsors_logo${i}`], next, "/tournament_sponsors") 
+          sponsors[i].logo = imageUrl
+        } 
+      }
+
+      //Finding tournament sponsors
+      const all_sponsors = await prisma.tournament_sponsors.findMany({
+        where:{
+          tournament_id
+        }
+      })
+
+      //deleting sponsors logos from imagekit
+      for(let i=0; i<all_sponsors.length; i++){
+        await deleteImage(all_sponsors[i].logo)
+      }
+
+      //Deleting tournament sponsors
+      await prisma.tournament_sponsors.deleteMany({
+        where:{
+          tournament_id
+        }
+      })
+
+      
+      //Add new sponsors 
+      for(let i=0; i< sponsors.length; i++){
+        await prisma.tournament_sponsors.create({
+          data:{
+            title: sponsors[i].name,
+            logo: sponsors[i].logo,
+            tournament_id
+          }
+        })
+      }
 
       res
         .status(200)
