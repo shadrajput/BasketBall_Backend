@@ -3,6 +3,7 @@ const {
   matchScore,
   updateMatchDetails,
   deleteMatch,
+  matchList,
   getMatchList,
 } = require("./match.controller");
 const {
@@ -12,15 +13,13 @@ const {
 
 const router = express.Router();
 router.get("/list/:status&:pageNo", getMatchList);
-router.get("/:match_id", isAuthenticatedUser, matchScore);
+// router.get("/:match_id", isAuthenticatedUser, matchScore);
+router.get('/score/:match_id', isAuthenticatedUser, matchScore)
+router.get('/matches', 
+// isAuthenticatedUser, 
+matchList)
+router.put('/update/:match_id', isAuthenticatedUser, updateMatchDetails)
+router.delete('/delete/:tournament_id/:match_id', isAuthenticatedUser, isAuthTournamentOrganizer, deleteMatch)
 
-router.get("/score/:match_id", isAuthenticatedUser, matchScore);
-router.put("/update/:match_id", isAuthenticatedUser, updateMatchDetails);
-router.delete(
-  "/delete/:tournament_id/:match_id",
-  isAuthenticatedUser,
-  isAuthTournamentOrganizer,
-  deleteMatch
-);
 
-module.exports = router;
+module.exports = router

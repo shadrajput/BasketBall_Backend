@@ -5,11 +5,17 @@ const ErrorHandler = require("../utils/ErrorHandler");
 const DefaultteamImage =
   "https://ik.imagekit.io/cpxhw6dfc/team_images/1680341770350_basketball_a1D05Joig.png";
 
+const DefaultplayerImage =
+  "https://ik.imagekit.io/cpxhw6dfc/team_images/1680341770350_basketball_a1D05Joig.png";
+
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
+
+
+
 
 async function uploadImage(file, folder) {
   return new Promise((resolve, reject) => {
@@ -62,6 +68,7 @@ const searchImage = async (name) => {
 };
 
 async function deleteImage(name) {
+  console.log(name)
   const image = name.split("/")[5];
 
   try {

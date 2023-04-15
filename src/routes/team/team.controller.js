@@ -151,6 +151,7 @@ async function httpGetTeamByUserId(req, res, next) {
 }
 
 async function uploadLogo(formData, logo) {
+  console.log(formData , logo)
   const { files } = formData;
   if (!files || !files.team_logo) {
     return logo.length <= 2 ? DefaultteamImage : logo;

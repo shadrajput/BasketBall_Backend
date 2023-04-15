@@ -23,6 +23,7 @@ router.post(
   // isAuthenticatedUser,
   playerRegistration
 );
+
 router.get(
   "/list/:page&:PlayerName",
   // isAuthenticatedUser,
@@ -36,7 +37,7 @@ router.get(
 );
 
 router.put(
-  "/update/:player_id",
+  "/update",
   // isAuthenticatedUser,
   // isAuthPlayer,
   updatePlayerDetails

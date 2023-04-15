@@ -3,7 +3,11 @@ const { PrismaClient } = require('@prisma/client');
 const ErrorHandler = require("../../utils/ErrorHandler");
 const ImageKit = require("imagekit");
 const formidable = require("formidable");
-const fs = require("fs");
+const {
+    uploadImage,
+    deleteImage,
+    DefaultplayerImage,
+} = require("../../helper/imageUpload");
 
 const prisma = new PrismaClient();
 
@@ -21,64 +25,39 @@ const addnews = catchAsyncErrors(async (req, res, next) => {
 
     const form = new formidable.IncomingForm();
     form.parse(req, async function (err, fields, files) {
-        if (err) {
-            return res.status(500).json({ success: false, message: err.message });
-        }
+        try {
 
-        let photo = "";
-
-        const myPromise = new Promise(async (resolve, reject) => {
-            if (files.photo.originalFilename != "" && files.photo.size != 0) {
-                const ext = files.photo.mimetype.split("/")[1].trim();
-
-                if (files.photo.size >= 2000000) {
-                    // 2000000(bytes) = 2MB
-                    return next(new ErrorHandler('Photo size should be less than 2MB', 400));
-                }
-                if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-                    return next(new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400));
-                }
-
-                var oldPath = files.photo.filepath;
-                var fileName = Date.now() + "_" + files.photo.originalFilename;
-
-                fs.readFile(oldPath, function (err, data) {
-                    if (err) {
-                        return next(new ErrorHandler(err.message, 500));
-                    }
-                    imagekit.upload({
-                        file: data,
-                        fileName: fileName,
-                        overwriteFile: true,
-                        folder: '/player_images'
-                    }, function (error, result) {
-                        if (error) {
-                            return next(new ErrorHandler(error.message, 500));
-                        }
-                        photo = result.url
-                        resolve();
-                    });
-                });
+            const NewsInfo = JSON.parse(fields?.data);
+            if (err) {
+                return res.status(500).json({ success: false, message: err.message });
             }
-            else {
-                resolve()
-            }
-        })
-
-        myPromise.then(async () => {
-
-            let { title, description, created_at } = fields
-            await prisma.news.create({
+            let photo = "";
+            photo = await uploadLogo(files, photo);
+            const data = await prisma.news.create({
                 data: {
                     photo: photo,
-                    title: title,
-                    description: description,
-                    created_at: created_at
-                }
-            })
+                    title: NewsInfo.NewsInfo.title,
+                    description: NewsInfo.NewsInfo.description,
+                },
+            });
 
-            res.status(201).json({ success: true, message: "News added successfull." })
-        })
+            res.status(201).json({
+                data: data,
+                success: true,
+                message: "News Added successfull.",
+            });
+        } catch (error) {
+            next(error)
+        }
+
+
+        // myPromise.then(async () => {
+
+        //     let { title, description, created_at } = fields
+
+
+        //     res.status(201).json({ success: true, message: "News added successfull." })
+        // })
 
     });
 
@@ -113,6 +92,7 @@ const oneNewsDetails = catchAsyncErrors(async (req, res, next) => {
             id: Number(id)
         }
     })
+
     res.status(200).json({
         oneNewsDetails: oneNewsDetails,
         success: true,
@@ -129,7 +109,7 @@ const updateNewsDetails = catchAsyncErrors(async (req, res, next) => {
 
     const { title, description, created_at } = req.body
 
- const updateNewsDetails = await prisma.news.update({
+    const updateNewsDetails = await prisma.news.update({
         where: {
             id: Number(id)
         },
@@ -140,10 +120,11 @@ const updateNewsDetails = catchAsyncErrors(async (req, res, next) => {
         }
     })
 
-    res.status(200).json({ 
-        updateNewsDetails : updateNewsDetails,
-        success: true, 
-        message: "News details updated" })
+    res.status(200).json({
+        updateNewsDetails: updateNewsDetails,
+        success: true,
+        message: "News details updated"
+    })
 })
 
 
@@ -151,20 +132,36 @@ const updateNewsDetails = catchAsyncErrors(async (req, res, next) => {
 // ------------------ Delete_News -------------------
 // ----------------------------------------------------
 const deleteNewsDetails = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { id } = req.params
+        const deleteNewsDetails = await prisma.news.delete({
+            where: {
+                id: Number(id)
+            }
+        })
 
-    const { id } = req.params
- const deleteNewsDetails = await prisma.news.delete({
-        where: {
-            id: Number(id)
-        }
-    })
+        res.status(200).json({
+            deleteNewsDetails: deleteNewsDetails,
+            success: true,
+            message: "News details deleted"
+        })
+    } catch (error) {
+        console.log(error)
+    }  
 
-    res.status(200).json({ 
-        deleteNewsDetails : deleteNewsDetails ,
-        success: true, 
-        message: "News details deleted" })
 })
 
+
+// ----------------------------------------------------
+// ------------------ Upload_image -------------------
+// ----------------------------------------------------
+async function uploadLogo(files, photo) {
+    try {
+        return await uploadImage(files.photo, "player_image");
+    } catch (error) {
+        throw new Error(error.message);
+    }
+}
 
 
 
