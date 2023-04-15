@@ -1,29 +1,40 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-async function createTeam(teamData, logo, captain) {
+async function createTeam(teamData, logo, captain, userId) {
   const {
     team_name,
     about_team,
     coach_name,
     coach_mobile,
-    assistant_coach_name,
-    assistant_coach_mobile,
+    asst_coach_name,
+    asst_coach_mobile,
   } = teamData.TeamInfo;
 
-  return prisma.teams.create({
+  const teem = await prisma.teams.create({
     data: {
       logo,
       team_name,
       about_team,
       coach_name,
       coach_mobile,
-      asst_coach_name: assistant_coach_name,
-      asst_coach_mobile: assistant_coach_mobile,
-      user_id: 1,
+      asst_coach_name,
+      asst_coach_mobile,
+      user_id: userId,
       captain_id: Number(captain),
     },
   });
+
+  await prisma.users.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      is_manager: true,
+    },
+  });
+
+  return teem;
 }
 
 async function deleteTeamPlayer(teamID) {
@@ -35,7 +46,6 @@ async function deleteTeamPlayer(teamID) {
 }
 
 async function updateTeam({ id, data, logo, captain }) {
-  console.log(captain);
   const {
     team_name,
     coach_name,
@@ -53,7 +63,7 @@ async function updateTeam({ id, data, logo, captain }) {
       coach_mobile,
       asst_coach_mobile,
       asst_coach_name,
-      captain_id: 1,
+      captain_id: captain,
     },
   });
 

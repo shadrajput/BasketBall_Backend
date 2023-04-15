@@ -2,16 +2,31 @@ const express = require("express");
 const {
   httpTeamRegister,
   httpGetAllTeams,
-  httpSearchTeamByName,
   httpGetTeamDetailById,
   httpUpdateTeam,
+  httpGetTeamByUserId,
+  httpPostTournament,
 } = require("./team.controller");
+const {
+  isAuthenticatedUser,
+  isAuthTeamManager,
+} = require("../../middlewares/auth");
 
 const teamRouter = express.Router();
 
-teamRouter.post("/registration", httpTeamRegister);
-teamRouter.get("/list/:page&:TeamName", httpGetAllTeams);
-teamRouter.post("/search", httpSearchTeamByName);
-teamRouter.put("/update", httpUpdateTeam);
-teamRouter.get("/detail/:id", httpGetTeamDetailById);
+teamRouter.post("/registration", isAuthenticatedUser, httpTeamRegister);
+teamRouter.get("/list/:page&:TeamName", isAuthenticatedUser, httpGetAllTeams);
+teamRouter.get("/user/:userId", isAuthenticatedUser, httpGetTeamByUserId);
+teamRouter.put(
+  "/update/:team_id",
+  isAuthenticatedUser,
+  isAuthTeamManager,
+  httpUpdateTeam
+);
+teamRouter.post(
+  "/tournament/register",
+  isAuthenticatedUser,
+  httpPostTournament
+);
+teamRouter.get("/detail/:id", isAuthenticatedUser, httpGetTeamDetailById);
 module.exports = teamRouter;

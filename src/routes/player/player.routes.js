@@ -13,6 +13,11 @@ const {
 } = require("./player.controller");
 const router = express.Router();
 
+router.get(
+  "/search/:number",
+  // isAuthenticatedUser,
+  onePlayerDetailsbyNumber
+);
 router.post(
   "/registration",
   // isAuthenticatedUser,
@@ -28,12 +33,6 @@ router.get(
   "/details/:player_id",
   // isAuthenticatedUser,
   onePlayerDetailsbyId
-);
-
-router.get(
-  "/search/:number",
-  // isAuthenticatedUser,
-  onePlayerDetailsbyNumber
 );
 
 router.put(

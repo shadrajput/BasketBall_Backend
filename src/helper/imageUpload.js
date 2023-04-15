@@ -24,7 +24,7 @@ async function uploadImage(file, folder) {
       reject(new Error("Only JPG, JPEG or PNG logo is allowed"));
     }
 
-  const oldPath = file.filepath;
+    const oldPath = file.filepath;
     const fileName = `${Date.now()}_${file.originalFilename}`;
 
     fs.readFile(oldPath, (err, data) => {
@@ -70,8 +70,12 @@ async function deleteImage(name) {
       await imagekit.deleteFile(imageID);
     }
   } catch (error) {
-    return next(new ErrorHandler("Failed to update logo", 500));
+    return new ErrorHandler("Failed to update logo", 500);
   }
 }
+let image =
+  "https://ik.imagekit.io/cpxhw6dfc/team_images/1680499897385_indiana-pacers-logo_eFwaHX8zT.png";
 
+const daa = deleteImage(image);
+console.log(daa);
 module.exports = { uploadImage, deleteImage, DefaultteamImage };

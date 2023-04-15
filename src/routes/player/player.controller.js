@@ -24,7 +24,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
     }
     const playerData = JSON.parse(fields?.data);
     const { basicInfo, gameInfo } = playerData.PlayerInfo;
-    console.log(basicInfo)
+    console.log(basicInfo);
     const result = await prisma.players.findFirst({
       where: {
         AND: [
@@ -44,8 +44,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       return next(new ErrorHandler("Please Change Mobile Number"));
     }
 
-
-    console.log(fields)
+    console.log(fields);
 
     let photo = "";
     const myPromise = new Promise(async (resolve, reject) => {
@@ -132,8 +131,8 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 // -------------------- all_Player --------------------
 // ----------------------------------------------------
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
-  let { page, PlayerName } = req.params;
-  PlayerName = PlayerName == "search" ? "" : PlayerName;
+  const NoofPlayer = 10;
+
   try {
     const all_players = await prisma.players.findMany({
       skip: page * 10,
@@ -146,7 +145,7 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
       },
       include: {
         player_statistics: {
-          orderBy: { points: "desc" }
+          orderBy: { points: "desc" },
         },
         users: true,
         team_players: {
@@ -156,7 +155,18 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
         },
       },
     });
-    return res.status(200).json({ success: true, data: all_players });
+
+    const sortedData = all_players.sort(
+      (a, b) => b.player_statistics[0].points - a.player_statistics[0].points
+    );
+
+    const startIndex = (1 - 1) * NoofPlayer;
+    const endIndex = startIndex + NoofPlayer;
+
+    // Slice the array to get the current page
+    const currentArray = sortedData.slice(startIndex, endIndex);
+
+    return res.status(200).json({ success: true, data: currentArray });
   } catch (error) {
     next(error);
   }
@@ -195,9 +205,8 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
       message: "Single player details",
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
-
 });
 
 // ----------------------------------------------------
@@ -205,6 +214,7 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
   let { number } = req.params;
+  console.log(number);
   number = number.length < 4 ? "" : number;
   try {
     const SinglePlayerDetails = await prisma.players.findFirst({
@@ -218,16 +228,14 @@ const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
       success: true,
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
-
 });
 
 // ----------------------------------------------------
 // ------------------ Update_Player -------------------
 // ----------------------------------------------------
 const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
-
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
     if (err) {
@@ -256,7 +264,9 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
                 //Deleting old photo
                 imagekit.deleteFile(old_photo_fileId, function (error, result) {
                   if (error) {
-                    return next(new ErrorHandler("Failed to update photo", 500));
+                    return next(
+                      new ErrorHandler("Failed to update photo", 500)
+                    );
                   }
                 });
               }
@@ -354,9 +364,8 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
           message: "Player details updated",
         });
       });
-
     } catch (error) {
-      next(error)
+      next(error);
     }
   });
 });
@@ -379,9 +388,8 @@ const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
       message: "Player details deleted",
     });
   } catch (error) {
-    next(error)
+    next(error);
   }
-
 });
 
 module.exports = {
