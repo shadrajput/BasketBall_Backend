@@ -45,7 +45,7 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
 
   const match_details = await prisma.matches.findUnique({
     where: {
-      id: match_id,
+      id: Number(match_id),
     },
     include: {
       tournaments: true,
@@ -136,13 +136,15 @@ const matchScore = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-const matchList = catchAsyncErrors(async(req,res,next) => {
+const matchList = catchAsyncErrors(async (req, res, next) => {
   try {
     const matches = await prisma.matches.findMany({
-      include:{
-        team_1  : true,
-        team_2  : true,
-        tournaments : true
+      include: {
+        tournaments: true,
+        team_1: true,
+        team_2: true,
+        scorekeeper: true,
+        won_by_team: true,
       }
     });
 
