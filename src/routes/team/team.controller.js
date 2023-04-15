@@ -99,7 +99,6 @@ async function httpGetAllTeams(req, res, next) {
 }
 
 async function httpPostTournament(req, res) {
-  console.log(req.body);
   const data = req.body;
 
   try {
@@ -112,7 +111,7 @@ async function httpPostTournament(req, res) {
       },
     });
 
-    console.log(existingRecord);
+    console.log("record", existingRecord);
     if (existingRecord) {
       return res.status(400).json({
         success: false,
@@ -127,7 +126,6 @@ async function httpPostTournament(req, res) {
         team_id: data.team_id,
       },
     });
-
     return res.status(201).json({ success: true, data: result });
   } catch (error) {
     next(error);
