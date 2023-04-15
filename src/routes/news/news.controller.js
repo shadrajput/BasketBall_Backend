@@ -132,22 +132,18 @@ const updateNewsDetails = catchAsyncErrors(async (req, res, next) => {
 // ------------------ Delete_News -------------------
 // ----------------------------------------------------
 const deleteNewsDetails = catchAsyncErrors(async (req, res, next) => {
-    try {
-        const { id } = req.params
-        const deleteNewsDetails = await prisma.news.delete({
-            where: {
-                id: Number(id)
-            }
-        })
+    const { id } = req.params
+    const deleteNewsDetails = await prisma.news.delete({
+        where: {
+            id: Number(id)
+        }
+    })
 
-        res.status(200).json({
-            deleteNewsDetails: deleteNewsDetails,
-            success: true,
-            message: "News details deleted"
-        })
-    } catch (error) {
-        console.log(error)
-    }  
+    res.status(200).json({
+        deleteNewsDetails: deleteNewsDetails,
+        success: true,
+        message: "News details deleted"
+    })
 
 })
 

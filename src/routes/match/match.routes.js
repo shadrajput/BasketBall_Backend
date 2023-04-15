@@ -13,12 +13,12 @@ const {
 
 const router = express.Router();
 router.get("/list/:status&:pageNo", getMatchList);
-// router.get("/:match_id", isAuthenticatedUser, matchScore);
+router.get("/:match_id", isAuthenticatedUser, matchScore);
 router.get('/score/:match_id', isAuthenticatedUser, matchScore)
 router.get('/matches', 
-// isAuthenticatedUser, 
+isAuthenticatedUser, 
 matchList)
-router.put('/update/:match_id', isAuthenticatedUser, updateMatchDetails)
+router.put('/update/:tournament_id/:match_id', isAuthenticatedUser, isAuthTournamentOrganizer, updateMatchDetails)
 router.delete('/delete/:tournament_id/:match_id', isAuthenticatedUser, isAuthTournamentOrganizer, deleteMatch)
 
 

@@ -198,7 +198,6 @@ const updateMatchDetails = catchAsyncErrors(async (req, res, next) => {
 });
 
 const deleteMatch = catchAsyncErrors(async (req, res, next) => {
-  console.log("ok ");
   const match_id = Number(req.params.match_id);
 
   const quarters = await prisma.match_quarters.findFirst({

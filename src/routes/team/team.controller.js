@@ -110,7 +110,6 @@ async function httpPostTournament(req, res) {
       },
     });
 
-    console.log("record", existingRecord);
     if (existingRecord) {
       return res.status(400).json({
         success: false,
@@ -151,7 +150,6 @@ async function httpGetTeamByUserId(req, res, next) {
 }
 
 async function uploadLogo(formData, logo) {
-  console.log(formData , logo)
   const { files } = formData;
   if (!files || !files.team_logo) {
     return logo.length <= 2 ? DefaultteamImage : logo;

@@ -203,7 +203,6 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
   let { number } = req.params;
-  console.log(number);
   number = number.length < 4 ? "" : number;
   try {
     const SinglePlayerDetails = await prisma.players.findFirst({
@@ -298,15 +297,11 @@ const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 // ------------------ Upload_logo -------------------
 // ----------------------------------------------------
 async function uploadLogo(files, photo) {
-  console.log(files)
   if (!files || !files.logo) {
-    console.log("empty ke andar to gye");
     return photo.length <= 2 ? DefaultplayerImage : photo;
   }
-  console.log("New Image upload kia")
   try {
     if (photo && photo != DefaultplayerImage) {
-      console.log("yaha to ja raha he");
       await deleteImage(photo);
     }
     return await uploadImage(files.logo, "player_image");

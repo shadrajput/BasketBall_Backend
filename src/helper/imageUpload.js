@@ -68,7 +68,6 @@ const searchImage = async (name) => {
 };
 
 async function deleteImage(name) {
-  console.log(name)
   const image = name.split("/")[5];
 
   try {
@@ -83,6 +82,4 @@ async function deleteImage(name) {
 let image =
   "https://ik.imagekit.io/cpxhw6dfc/team_images/1680499897385_indiana-pacers-logo_eFwaHX8zT.png";
 
-const daa = deleteImage(image);
-console.log(daa);
 module.exports = { uploadImage, deleteImage, DefaultteamImage };

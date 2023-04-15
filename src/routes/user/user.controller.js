@@ -106,6 +106,29 @@ const googleLogin = catchAsyncErrors(async(req, res, next)=>{
     }
 })
 
+const updateUserProfile = catchAsyncErrors(async(req, res, next) => {
+    const user_id = req.user.id
+
+    const {full_name, email, password} = req.body
+
+    let hashedPassword = null
+    if(password != 'Wellbenix'){
+        hashedPassword = await bcrypt.hash(password.trim(), 10)
+    }
+    await prisma.users.update({
+        where: {
+            id: user_id
+        },
+        data:{
+            name: full_name.trim(),
+            email: req.user.email == email.trim() ? undefined : email.trim(),
+            password: hashedPassword ? hashedPassword : undefined
+        }
+    })
+
+    res.status(200).json({success: true, message: 'Profile updated successfully'})
+})
+
 const verifyAccount = catchAsyncErrors(async(req, res, next) => {
     const {user_id, token} = req.params;
 
@@ -142,5 +165,6 @@ module.exports = {
     userSignup, 
     userLogin,
     googleLogin,
+    updateUserProfile,
     verifyAccount
 }

@@ -2,13 +2,11 @@ const ErrorHandler = require("../utils/ErrorHandler");
 const {Prisma} = require('@prisma/client')
 
 module.exports = (err,req,res,next)=>{
-    console.log(err)
     err.statusCode = err.statusCode || 500;
     err.message = err.message || "Internal server error";
     
 
     if (err instanceof Prisma.PrismaClientValidationError) {
-        console.log(err)
         const message = `Invalid data entered`;
         err = new ErrorHandler(message,400)
     }
