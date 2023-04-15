@@ -1,9 +1,11 @@
 const express = require("express");
-const { matchScore, updateMatchDetails, getMatchList } = require("./match.controller");
-const { isAuthenticatedUser } = require("../../middlewares/auth");
+const { matchScore, updateMatchDetails, deleteMatch, getMatchList } = require("./match.controller");
+const { isAuthenticatedUser, isAuthTournamentOrganizer } = require("../../middlewares/auth");
 
 const router = express.Router();
 router.get("/list/:status&:pageNo", getMatchList);
 router.get("/:match_id", isAuthenticatedUser, matchScore);
 
-module.exports = router;
+router.get('/score/:match_id', isAuthenticatedUser, matchScore)
+router.put('/update/:match_id', isAuthenticatedUser, updateMatchDetails)
+router.delete('/delete/:tournament_id/:match_id', isAuthenticatedUser, isAuthTournamentOrganizer, deleteMatch)

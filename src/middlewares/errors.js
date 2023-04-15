@@ -18,6 +18,12 @@ module.exports = (err,req,res,next)=>{
         err = new ErrorHandler(message,400)
     }
 
+    // fs.readFileSync error
+    if(err.name === "Error reading file"){
+        const message = `Failed to read image`;
+        err = new ErrorHandler(message,400)
+    }
+
     // Wrong JWT error
     if(err.name === "JsonWebTokenError"){
         const message = `Invalid token, try again`;

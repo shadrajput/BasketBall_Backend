@@ -20,7 +20,6 @@ async function httpTeamRegister(req, res, next) {
     const userId = req.user.id;
     const formData = await parseFormData(req);
     const teamData = JSON.parse(formData?.fields?.data);
-    console.log(teamData);
     const teamName = teamData.TeamInfo.team_name;
     const captain = teamData.captain;
     const existingTeam = await prisma.teams.findFirst({

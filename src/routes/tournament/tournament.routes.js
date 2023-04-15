@@ -8,6 +8,7 @@ const {
   allTournaments,
   tournamentOfOrganizer,
   updateTournamentDetails,
+  deleteTournament,
   tournamentDetails,
   tournamentSchedule,
   startRegistration,
@@ -18,6 +19,7 @@ const {
   acceptTeamRequest,
   rejectTeamRequest,
   disqualifyTeam,
+  requalifyTeam,
   isAuthenticOrganizer,
   createPools,
   matchFormation,
@@ -34,6 +36,7 @@ router.get("/details/:tournament_id", isAuthenticatedUser, tournamentDetails);
 
 router.get("/schedule/:tournament_id", tournamentSchedule);
 
+router.delete("/delete/:tournament_id", isAuthenticatedUser, deleteTournament);
 router.put(
   "/update/:tournament_id",
   isAuthenticatedUser,
@@ -87,6 +90,12 @@ router.put(
   isAuthenticatedUser,
   isAuthTournamentOrganizer,
   disqualifyTeam
+);
+router.put(
+  "/requalify-team/:tournament_id/:team_id",
+  isAuthenticatedUser,
+  isAuthTournamentOrganizer,
+  requalifyTeam
 );
 
 router.get(

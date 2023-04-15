@@ -91,7 +91,6 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       }
     });
 
-    console.log(gameInfo);
     myPromise.then(async () => {
       const player_data = await prisma.players.create({
         data: {
@@ -294,7 +293,7 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 
           fs.readFile(oldPath, function (err, data) {
             if (err) {
-              return next(new ErrorHandler(error.message, 500));
+              return next(new ErrorHandler(err.message, 500));
             }
             imagekit.upload(
               {
