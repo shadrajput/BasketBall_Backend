@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt')
 const { PrismaClient } =  require('@prisma/client')
 const { comparePassword, generateToken } = require('../../middlewares/auth');
 const ErrorHandler = require("../../utils/ErrorHandler");
+const jwt = require("jsonwebtoken");
 const axios = require('axios')
 
 const prisma = new PrismaClient();
@@ -62,6 +63,23 @@ const userLogin = catchAsyncErrors(async(req, res, next) =>{
 
     res.status(200).json({success: true, message: 'Login successful', token, user })
     
+})
+
+const getUserData = catchAsyncErrors(async(req, res, next)=>{
+    const token = req.headers.authentication;
+    const JWTSign = process.env.JWT_SIGN;
+
+    if (!token) {
+        return next(new ErrorHandler("Please login to access this resource", 401));
+    }
+
+    const user_id = jwt.verify(token, JWTSign);
+
+    const user = await prisma.users.findUnique({
+        where: { id: Number(user_id) },
+    });
+
+    res.status(200).json({success: true, user})
 })
 
 const googleLogin = catchAsyncErrors(async(req, res, next)=>{
@@ -164,6 +182,7 @@ const verifyAccount = catchAsyncErrors(async(req, res, next) => {
 module.exports = {
     userSignup, 
     userLogin,
+    getUserData,
     googleLogin,
     updateUserProfile,
     verifyAccount
