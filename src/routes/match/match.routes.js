@@ -14,7 +14,7 @@ const {
 const router = express.Router();
 router.get("/list/:status&:pageNo", getMatchList);
 router.get("/:match_id", isAuthenticatedUser, matchScore);
-router.get('/score/:match_id', isAuthenticatedUser, matchScore)
+// router.get('/score/:match_id', isAuthenticatedUser, matchScore)
 router.get('/matches', 
 isAuthenticatedUser, 
 matchList)
