@@ -147,20 +147,30 @@ model tournament_sponsors {
 }
 
 model tournament_teams {
-  id                    Int         @id @default(autoincrement())
-  age_categories        String[]
-  is_selected           Int         @default(2)
-  reject_reason         String?
-  points                Int         @default(0)
-  is_disqualified       Boolean     @default(false)
+  id                        Int                         @id @default(autoincrement())
+  age_categories            String[]
+  is_selected               Int                         @default(2)
+  reject_reason             String?
+  tournament_id             Int
+  team_id                   Int
+  created_at                DateTime                    @default(now()) @db.Timestamp(6)
+  gender_type               String[]
+  teams                     teams                       @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
+  tournaments               tournaments                 @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
+  tournament_teams_reg_type tournament_teams_reg_type[]
+}
+
+model tournament_teams_reg_type {
+  id                    Int              @id  @default(autoincrement())
+  tournament_team_id    Int
+  age_category          String
+  gender_type           String?
   pool_name             String?
-  tournament_id         Int
-  team_id               Int
-  created_at            DateTime    @default(now()) @db.Timestamp(6)
-  gender_type           String[]
+  points                Int              @default(0)
+  is_disqualified       Boolean          @default(false)
   is_knockout_upperhalf Boolean?
-  teams                 teams       @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
-  tournaments           tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_table")
+  created_at            DateTime?        @default(now()) @db.Timestamp(6)
+  tournament_teams      tournament_teams @relation(fields: [tournament_team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "tournament_teams_reg_type")
 }
 
 model matches {
@@ -232,16 +242,16 @@ model match_quarters {
 }
 
 model match_score {
-  id                            Int              @id @default(autoincrement())
-  team_id                       Int
-  points                        Int
-  point_status                  String
-  created_at                    DateTime         @default(now()) @db.Timestamp(6)
-  player_id                     Int
-  quarter_id                    Int
-  quarter                       match_quarters   @relation("match_score_quarter_idTomatch_quarters", fields: [quarter_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_quarter_table")
-  players                       players          @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
-  teams                         teams            @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
+  id           Int            @id @default(autoincrement())
+  team_id      Int
+  points       Int
+  point_status String
+  created_at   DateTime       @default(now()) @db.Timestamp(6)
+  player_id    Int
+  quarter_id   Int
+  quarter      match_quarters @relation("match_score_quarter_idTomatch_quarters", fields: [quarter_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "match_quarter_table")
+  players      players        @relation(fields: [player_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "players_table")
+  teams        teams          @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_table")
 }
 
 model gallery {
