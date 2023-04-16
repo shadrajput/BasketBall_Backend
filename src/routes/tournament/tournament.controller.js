@@ -661,8 +661,9 @@ const isAuthenticOrganizer = (req, res) =>{
 
 const createPools = catchAsyncErrors(async (req, res, next) => {
   const tournament_id = Number(req.params.tournament_id);
-  const total_groups = Number(req.body.total_groups);
   const teams_per_group = Number(req.body.teams_per_group);
+  const gender_type = req.body.gender_type;
+  const age_type = req.body.age_type;
 
   const pool_names = [
     "A",
@@ -685,8 +686,13 @@ const createPools = catchAsyncErrors(async (req, res, next) => {
   const all_teams = await prisma.tournament_teams.findMany({
     where: {
       tournament_id,
-      is_disqualified: false,
       is_selected: 1,
+      gender_type: {
+        hasEvery: [gender_type],
+      },
+      age_categories: {
+        hasEvery: [age_type],
+      },
     },
   });
 
@@ -716,9 +722,18 @@ const createPools = catchAsyncErrors(async (req, res, next) => {
   let j = 0,
     count = 1;
   for (let i = 0; i < all_teams.length; i++) {
-    await prisma.tournament_teams.update({
+    const reg_type_data = await prisma.tournament_teams_reg_type.findFirst({
       where: {
-        id: all_teams[i].id,
+        AND:[
+          { tournament_team_id: all_teams[i].id },
+          { age_category: age_type },
+          { gender_type }
+        ]
+      },
+    })
+    await prisma.tournament_teams_reg_type.update({
+      where: {
+        id : reg_type_data.id
       },
       data: {
         pool_name: pool_names[j],

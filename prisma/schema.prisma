@@ -164,7 +164,7 @@ model tournament_teams_reg_type {
   id                    Int              @id  @default(autoincrement())
   tournament_team_id    Int
   age_category          String
-  gender_type           String?
+  gender_type           String
   pool_name             String?
   points                Int              @default(0)
   is_disqualified       Boolean          @default(false)
