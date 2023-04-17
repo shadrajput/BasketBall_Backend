@@ -86,13 +86,13 @@ router.put(
   rejectTeamRequest
 );
 router.put(
-  "/disqualify-team/:tournament_id/:team_id",
+  "/disqualify-team/:tournament_id",
   isAuthenticatedUser,
   isAuthTournamentOrganizer,
   disqualifyTeam
 );
 router.put(
-  "/requalify-team/:tournament_id/:team_id",
+  "/requalify-team/:tournament_id",
   isAuthenticatedUser,
   isAuthTournamentOrganizer,
   requalifyTeam
