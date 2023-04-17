@@ -52,7 +52,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       photo = await uploadLogo(files, photo);
       const data = await prisma.players.create({
         data: {
-          user_id: 1,
+          user_id: 2,
           photo: photo,
           first_name: basicInfo.first_name,
           middle_name: basicInfo.middle_name,
@@ -72,7 +72,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
       await prisma.player_statistics.create({
         data: {
-          player_id: player_data.id
+          player_id: data.id
         }
       })
 
@@ -84,36 +84,6 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
     } catch (error) {
       next(error)
     }
-
-    myPromise.then(async () => {
-      const player_data = await prisma.players.create({
-        data: {
-          user_id: 1,
-          photo: photo,
-          first_name: basicInfo.first_name,
-          middle_name: basicInfo.middle_name,
-          last_name: basicInfo.last_name,
-          alternate_mobile: basicInfo.alternate_mobile,
-          gender: basicInfo.gender,
-          height: Number(gameInfo.height),
-          weight: Number(gameInfo.weight),
-          pincode: basicInfo.pincode,
-          mobile: basicInfo.mobile,
-          playing_position: gameInfo.playing_position,
-          jersey_no: Number(gameInfo.jersey_no),
-          about: gameInfo.about,
-          date_of_birth: new Date(basicInfo.date_of_birth),
-        },
-      });
-
-
-
-      res.status(201).json({
-        data: player_data,
-        success: true,
-        message: "Player registration successful",
-      });
-    });
   });
 });
 
@@ -121,8 +91,8 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 // -------------------- all_Player --------------------
 // ----------------------------------------------------
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
-  const NoofPlayer = 10;
   let { page, PlayerName } = req.params;
+  PlayerName = PlayerName == "search" ? "" : PlayerName;
   try {
     const all_players = await prisma.players.findMany({
       skip: page * 10,
@@ -146,17 +116,7 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
       },
     });
 
-    const sortedData = all_players.sort(
-      (a, b) => b.player_statistics[0].points - a.player_statistics[0].points
-    );
-
-    const startIndex = (1 - 1) * NoofPlayer;
-    const endIndex = startIndex + NoofPlayer;
-
-    // Slice the array to get the current page
-    const currentArray = sortedData.slice(startIndex, endIndex);
-
-    return res.status(200).json({ success: true, data: currentArray });
+    return res.status(200).json({ success: true, data: all_players });
   } catch (error) {
     next(error);
   }
@@ -297,14 +257,17 @@ const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 // ------------------ Upload_logo -------------------
 // ----------------------------------------------------
 async function uploadLogo(files, photo) {
-  if (!files || !files.logo) {
-    return photo.length <= 2 ? DefaultplayerImage : photo;
-  }
+  // if (!files || !files.logo) {
+  //   return photo.length <= 2 ? DefaultplayerImage : photo;
+  // }
   try {
-    if (photo && photo != DefaultplayerImage) {
-      await deleteImage(photo);
+    if (files.logo && files.logo.originalFilename != "" && files.logo.size != 0){
+      if (photo) {
+        await deleteImage(photo);
+      }
+      return await uploadImage(files.logo, "player_image");
     }
-    return await uploadImage(files.logo, "player_image");
+    return null
   } catch (error) {
     throw new Error(error.message);
   }
