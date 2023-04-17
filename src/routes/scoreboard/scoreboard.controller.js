@@ -636,15 +636,15 @@ const endMatch = catchAsyncErrors( async (req, res, next)=>{
         await prisma.player_statistics.updateMany({
             where: {
                 player_id: {
-                in: await prisma.match_players.findMany({
-                    where: {
-                        match_id,
-                        team_id: match_won_team
-                    },
-                    select: {
-                        player_id: true
-                    }
-                }).then(matchPlayers => matchPlayers.map(mp => mp.player_id))
+                    in: await prisma.match_players.findMany({
+                        where: {
+                            match_id,
+                            team_id: match_won_team
+                        },
+                        select: {
+                            player_id: true
+                        }
+                    }).then(matchPlayers => matchPlayers.map(mp => mp.player_id))
                 }
             },
             data: {
