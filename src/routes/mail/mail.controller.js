@@ -3,14 +3,30 @@ const ScoreboardLinkSender = require("./scoreboardLink");
 const ErrorHandler = require('../../utils/ErrorHandler');
 
 const httpScoreboardLinkMail = catchAsyncErrors(async (req, res, next) => {
-  const data = req.body;
-  if (!data.email) {
-    return next(new ErrorHandler("Please provide your email", 400))
-  }
-  const { email } = req.body;
-  const link = "https://www.wellbenix.com"
-  await ScoreboardLinkSender({ email, link });
-  return res.status(200).json({ msg: "Message sent successfully" });
+
+  const { 
+    match_id, 
+    scorer_email,
+    scorer_token,
+    team_1, 
+    team_2, 
+    match_start_date, 
+    match_start_time, 
+    address } = req.body;
+
+  const link = `http://127.0.0.1:5173/scoreboard/${match_id}/${scorer_token}`
+
+  await ScoreboardLinkSender({ 
+    scorer_email, 
+    link, 
+    team_1, 
+    team_2, 
+    match_start_date, 
+    match_start_time, 
+    address
+  });
+
+  return res.status(200).json({success: true, message: "Link sent successfully" });
 })
 
 module.exports = {
