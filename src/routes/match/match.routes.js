@@ -13,8 +13,10 @@ const {
 } = require("../../middlewares/auth");
 
 const router = express.Router();
+router.get('/matches', 
+isAuthenticatedUser, 
+matchList)
 router.get("/list/:status&:pageNo", getMatchList);
-router.get('/matches', isAuthenticatedUser, matchList)
 router.get("/:match_id", isAuthenticatedUser, matchScore);
 router.get('/score/:match_id', isAuthenticatedUser, matchScore)
 router.put('/update/:tournament_id/:match_id', isAuthenticatedUser, isAuthTournamentOrganizer, updateMatchDetails)
