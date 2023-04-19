@@ -466,6 +466,7 @@ const tournamentSchedule = catchAsyncErrors(async (req, res, next) => {
         include: {
           team_1: true,
           team_2: true,
+          scorekeeper: true
         },
         orderBy: {
           created_at: "desc",

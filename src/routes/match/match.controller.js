@@ -163,22 +163,8 @@ const updateMatchDetails = catchAsyncErrors(async (req, res, next) => {
   const {
     start_date,
     start_time,
-    address,
-    scorekeeper_name,
-    scorekeeper_email,
-    scorekeeper_mobile,
+    address
   } = req.body;
-
-  const token = generateToken(32);
-
-  // const scorekeeper_details = await prisma.scorekeeper.create({
-  //   data: {
-  //     name: scorekeeper_name,
-  //     email: scorekeeper_email,
-  //     mobile: scorekeeper_mobile,
-  //     token,
-  //   },
-  // });
 
   await prisma.matches.update({
     where: {
@@ -188,13 +174,66 @@ const updateMatchDetails = catchAsyncErrors(async (req, res, next) => {
       start_date: new Date(start_date),
       start_time,
       address,
-      // scorekeeper_id: scorekeeper_details.id
     },
   });
 
   res
     .status(200)
-    .json({ success: true, message: "Match details updated successfully" });
+    .json({ success: true, message: "Details updated successfully" });
+});
+
+const updateMatchScorer = catchAsyncErrors(async(req, res, next) => {
+  const match_id = Number(req.params.match_id);
+  const {
+    scorekeeper_name,
+    scorekeeper_email,
+    scorekeeper_mobile,
+  } = req.body;
+
+  const match_details = await prisma.matches.findUnique({
+    where:{
+      id: match_id,
+    }
+  })
+
+  const token = generateToken(32);
+
+  if(match_details.scorekeeper_id){
+    await prisma.scorekeeper.update({
+      where:{
+        id: match_details.scorekeeper_id
+      },
+      data:{
+        name: scorekeeper_name,
+        email: scorekeeper_email,
+        mobile: scorekeeper_mobile,
+        token
+      }
+    })
+
+    res.status(200).json({ success: true, message: "Scorer updated successfully" });
+  }
+  else{
+    const scorekeeper_details = await prisma.scorekeeper.create({
+      data: {
+        name: scorekeeper_name,
+        email: scorekeeper_email,
+        mobile: scorekeeper_mobile,
+        token,
+      },
+    });
+  
+    await prisma.matches.update({
+      where: {
+        id: match_id,
+      },
+      data: {
+        scorekeeper_id: scorekeeper_details.id
+      },
+    });
+  
+    res.status(200).json({ success: true, message: "Scorer added successfully" });
+  }
 });
 
 const deleteMatch = catchAsyncErrors(async (req, res, next) => {
@@ -248,7 +287,7 @@ module.exports = {
   matchScore,
   matchList,
   updateMatchDetails,
+  updateMatchScorer,
   deleteMatch,
-  // viralTheMatch,
   getMatchList,
 };
