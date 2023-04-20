@@ -398,6 +398,22 @@ const deleteTournament = catchAsyncErrors(async (req, res, next)=>{
     }
   })
 
+  //finding tournaments
+  const any_tournament = await prisma.tournaments.findFirst({
+    user_id: req.user.id
+  })
+
+  if(!any_tournament) { //updating user table
+    await prisma.user.update({
+      where:{
+        id: req.user.id
+      },
+      data:{
+        is_organizer: false
+      }
+    })
+  }
+
   res.status(200).json({ success: true, message: 'Tournament deleted successfully' });
 
 })

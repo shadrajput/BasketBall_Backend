@@ -1,7 +1,7 @@
 const express = require("express");
 const {
-  // isAuthenticatedUser,
-  // isAuthPlayer
+  isAuthenticatedUser,
+  isAuthPlayer
 } = require("../../middlewares/auth");
 const {
   playerRegistration,
