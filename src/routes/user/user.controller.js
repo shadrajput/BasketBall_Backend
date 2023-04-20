@@ -4,6 +4,7 @@ const { PrismaClient } =  require('@prisma/client')
 const tokenGenerator = require("../../utils/tokenGenerator");
 const { comparePassword, generateToken  } = require('../../middlewares/auth');
 const registrationMail = require('../../routes/mail/registrationMail')
+const resendVerificationMail = require('../../routes/mail/resendVerificationMail')
 const ErrorHandler = require("../../utils/ErrorHandler");
 const jwt = require("jsonwebtoken");
 const axios = require('axios')
@@ -73,6 +74,20 @@ const userLogin = catchAsyncErrors(async(req, res, next) =>{
 
     res.status(200).json({success: true, message: 'Login successful', token, user })
     
+})
+
+const resendVerificationEmail = catchAsyncErrors(async(req, res, next) => {
+    const user = await prisma.users.findUnique({
+        where:{
+            id: req.user.id
+        }
+    })
+
+    const link = `http://127.0.0.1:5173/user/verify/${user.id}/${user.token}`
+
+    await resendVerificationMail({name: user.name, email: user.email, link})
+
+    res.status(200).json({success: true, message: 'Link has been sent to your email'})
 })
 
 const getUserData = catchAsyncErrors(async(req, res, next)=>{
@@ -195,7 +210,6 @@ const verifyAccount = catchAsyncErrors(async(req, res, next) => {
         }
     })
 
-
     res.status(200).json({success: true, message: 'Account verified successfully'})
 })
 
@@ -203,6 +217,7 @@ const verifyAccount = catchAsyncErrors(async(req, res, next) => {
 module.exports = {
     userSignup, 
     userLogin,
+    resendVerificationEmail,
     getUserData,
     googleLogin,
     updateUserProfile,
