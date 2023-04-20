@@ -15,38 +15,38 @@ const router = express.Router();
 
 router.get(
   "/search/:number",
-  // isAuthenticatedUser,
+  isAuthenticatedUser,
   onePlayerDetailsbyNumber
 );
 router.post(
   "/registration",
-  // isAuthenticatedUser,
+  isAuthenticatedUser,
   playerRegistration
 );
 
 router.get(
   "/list/:page&:PlayerName",
-  // isAuthenticatedUser,
+  isAuthenticatedUser,
   allPlayers
 );
 
 router.get(
   "/details/:player_id",
-  // isAuthenticatedUser,
+  isAuthenticatedUser,
   onePlayerDetailsbyId
 );
 
 router.put(
   "/update",
-  // isAuthenticatedUser,
-  // isAuthPlayer,
+  isAuthenticatedUser,
+  isAuthPlayer,
   updatePlayerDetails
 );
 
 router.delete(
   "/delete/:player_id",
-  // isAuthenticatedUser,
-  // isAuthPlayer,
+  isAuthenticatedUser,
+  isAuthPlayer,
   deletePlayerDetails
 );
 

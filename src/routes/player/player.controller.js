@@ -52,7 +52,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       photo = await uploadLogo(files, photo);
       const data = await prisma.players.create({
         data: {
-          user_id: 2,
+          user_id: user.id,
           photo: photo,
           first_name: basicInfo.first_name,
           middle_name: basicInfo.middle_name,
@@ -73,6 +73,15 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       await prisma.player_statistics.create({
         data: {
           player_id: data.id
+        }
+      })
+
+      await prisma.users.update({
+        where:{
+          id: user.id
+        },
+        data:{
+          is_player: true
         }
       })
 

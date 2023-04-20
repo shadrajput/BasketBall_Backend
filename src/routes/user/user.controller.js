@@ -87,6 +87,13 @@ const getUserData = catchAsyncErrors(async(req, res, next)=>{
 
     const user = await prisma.users.findUnique({
         where: { id: Number(user_id) },
+        include:{
+            players: {
+                select: {
+                    id: true,
+                },
+            }
+        }
     });
 
     res.status(200).json({success: true, user})

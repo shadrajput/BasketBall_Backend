@@ -37,6 +37,13 @@ exports.isAuthenticatedUser = catchAsyncErrors(async (req, res, next) => {
 
   req.user = await prisma.users.findUnique({
     where: { id: Number(user_id) },
+    include: {
+      players: {
+        select: {
+          id: true,
+        },
+      }
+    }
   });
 
   next();
