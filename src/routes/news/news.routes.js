@@ -12,7 +12,7 @@ const router = express.Router();
 router.post("/add",
   // isAuthenticatedUser, 
   addnews);
-router.get("/", allNews);
+router.get("/:page", allNews);
 router.get("/details/:id", oneNewsDetails);
 router.put("/update",
   // isAuthenticatedUser,
