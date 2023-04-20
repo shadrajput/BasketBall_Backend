@@ -5,6 +5,7 @@ const tokenGenerator = require("../../utils/tokenGenerator");
 const { comparePassword, generateToken  } = require('../../middlewares/auth');
 const registrationMail = require('../../routes/mail/registrationMail')
 const resendVerificationMail = require('../../routes/mail/resendVerificationMail')
+const resetPassword = require('../../routes/mail/resetPassword')
 const ErrorHandler = require("../../utils/ErrorHandler");
 const jwt = require("jsonwebtoken");
 const axios = require('axios')
@@ -88,6 +89,65 @@ const resendVerificationEmail = catchAsyncErrors(async(req, res, next) => {
     await resendVerificationMail({name: user.name, email: user.email, link})
 
     res.status(200).json({success: true, message: 'Link has been sent to your email'})
+})
+
+const sendResetPasswordLink = catchAsyncErrors(async(req, res, next) => {
+    const {email} = req.body;
+    
+    const user = await prisma.users.findFirst({
+        where:{
+            email
+        }
+    })
+
+    if(!user){
+        return next(new ErrorHandler('User not found with this email', 400))
+    }
+
+    const token = tokenGenerator(32)
+
+    await prisma.users.update({
+        where:{
+            id: user.id
+        },
+        data:{
+            token
+        }
+    })
+    const link = `http://127.0.0.1:5173/reset-password/${token}`
+
+    await resetPassword({name: user.name, email: user.email, link})
+
+    res.status(200).json({success: true, message: 'Reset password link has been sent to your email'})
+})
+
+const resetUserPassword = catchAsyncErrors(async(req, res, next)=>{
+    const {token, newPassword} = req.body
+
+    console.log(token, newPassword)
+    const user = await prisma.users.findFirst({
+        where:{
+            token
+        }
+    })
+
+    if(!user){
+        return next(new ErrorHandler('Your link has been expired', 400))
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword.trim(), 10)
+
+    await prisma.users.update({
+        where:{
+            id: user.id,
+        },
+        data:{
+            password: hashedPassword,
+            token: null
+        }
+    })
+
+    res.status(200).json({success: true, message: 'Password updated successfully'})
 })
 
 const getUserData = catchAsyncErrors(async(req, res, next)=>{
@@ -218,6 +278,8 @@ module.exports = {
     userSignup, 
     userLogin,
     resendVerificationEmail,
+    sendResetPasswordLink,
+    resetUserPassword,
     getUserData,
     googleLogin,
     updateUserProfile,
