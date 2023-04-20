@@ -4,6 +4,11 @@ const ErrorHandler = require("../../utils/ErrorHandler");
 const ImageKit = require("imagekit");
 const formidable = require("formidable");
 const fs = require("fs");
+const {
+    uploadImage,
+    deleteImage,
+    DefaultplayerImage,
+} = require("../../helper/imageUpload");
 
 const prisma = new PrismaClient();
 
@@ -21,64 +26,25 @@ const addgallery = catchAsyncErrors(async (req, res, next) => {
 
     const form = new formidable.IncomingForm();
     form.parse(req, async function (err, fields, files) {
+
+        const GalleryInfo = JSON.parse(fields?.data);
         if (err) {
             return res.status(500).json({ success: false, message: err.message });
         }
 
         let photo = "";
+        photo = await uploadLogo(files, photo);
+        const data = await prisma.gallery.create({
+            data: {
+                photo: photo,
+                category: GalleryInfo.GalleryInfo.category,
+            },
+        });
 
-        const myPromise = new Promise(async (resolve, reject) => {
-            if (files.photo.originalFilename != "" && files.photo.size != 0) {
-                const ext = files.photo.mimetype.split("/")[1].trim();
-
-                if (files.photo.size >= 2000000) {
-                    // 2000000(bytes) = 2MB
-                    return next(new ErrorHandler('Photo size should be less than 2MB', 400));
-                }
-                if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-                    return next(new ErrorHandler("Only JPG, JPEG or PNG photo is allowed", 400));
-                }
-
-                var oldPath = files.photo.filepath;
-                var fileName = Date.now() + "_" + files.photo.originalFilename;
-
-                fs.readFile(oldPath, function (err, data) {
-                    if (err) {
-                        return next(new ErrorHandler(err.message, 500));
-                    }
-                    imagekit.upload({
-                        file: data,
-                        fileName: fileName,
-                        overwriteFile: true,
-                        folder: '/player_images'
-                    }, function (error, result) {
-                        if (error) {
-                            return next(new ErrorHandler(error.message, 500));
-                        }
-                        photo = result.url
-                        resolve();
-                    });
-                });
-            }
-            else {
-                resolve()
-            }
-        })
-
-        myPromise.then(async () => {
-
-            let { tournament_id, category, priority, created_at } = fields
-            await prisma.gallery.create({
-                data: {
-                    tournament_id: tournament_id,
-                    photo: photo,
-                    category: category,
-                    priority: priority,
-                    created_at: created_at
-                }
-            })
-
-            res.status(201).json({ success: true, message: "Gallery added successfull." })
+        res.status(200).json({
+            data: data,
+            success: true,
+            message: "Gallery Add Success"
         })
 
     });
@@ -91,11 +57,15 @@ const addgallery = catchAsyncErrors(async (req, res, next) => {
 // -------------------- all_gallery --------------------
 // ----------------------------------------------------
 const allGellery = catchAsyncErrors(async (req, res, next) => {
+    let { page } = req.params;
 
-    const allGellery = await prisma.gallery.findMany()
+    const allGellery = await prisma.gallery.findMany({
+        skip: page * 10,
+        take: 10,
+    })
 
     res.status(200).json({
-        AllNews: allGellery,
+        data: allGellery,
         success: true,
         message: "All Gallery"
     })
@@ -163,6 +133,17 @@ const deleteGalleryDetails = catchAsyncErrors(async (req, res, next) => {
         message: "News details deleted"
     })
 })
+
+// ----------------------------------------------------
+// ------------------ Upload_image -------------------
+// ----------------------------------------------------
+async function uploadLogo(files, photo) {
+    try {
+        return await uploadImage(files.photo, "player_image");
+    } catch (error) {
+        throw new Error(error.message);
+    }
+}
 
 
 

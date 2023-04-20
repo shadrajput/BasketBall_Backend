@@ -9,8 +9,10 @@ const {
 const { isAuthenticatedUser } = require("../../middlewares/auth");
 const router = express.Router();
 
-router.post("/add", isAuthenticatedUser, addgallery);
-router.get("/", allGellery);
+router.post("/add", 
+// isAuthenticatedUser, 
+addgallery);
+router.get("/:page", allGellery);
 router.get("/:id", oneGalleryDetails);
 router.put("/update/:id", isAuthenticatedUser, updateGalleryDetails);
 router.delete("/delete/:id", isAuthenticatedUser, deleteGalleryDetails);

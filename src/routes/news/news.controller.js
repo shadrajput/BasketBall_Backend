@@ -67,8 +67,12 @@ const addnews = catchAsyncErrors(async (req, res, next) => {
 // -------------------- all_news --------------------
 // ----------------------------------------------------
 const allNews = catchAsyncErrors(async (req, res, next) => {
+    let { page } = req.params;
 
-    const AllNews = await prisma.news.findMany()
+    const AllNews = await prisma.news.findMany({
+        skip: page * 9,
+        take: 9,
+    })
 
     res.status(200).json({
         AllNews: AllNews,
