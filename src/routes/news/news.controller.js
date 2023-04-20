@@ -70,8 +70,8 @@ const allNews = catchAsyncErrors(async (req, res, next) => {
     let { page } = req.params;
 
     const AllNews = await prisma.news.findMany({
-        skip: page * 10,
-        take: 10,
+        skip: page * 9,
+        take: 9,
     })
 
     res.status(200).json({
