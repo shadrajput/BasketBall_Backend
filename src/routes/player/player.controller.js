@@ -163,7 +163,7 @@ const onePlayerDetailsbyId = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const onePlayerDetailsbyNumber = catchAsyncErrors(async (req, res, next) => {
   let { number } = req.params;
-  console.log(number);
+
   number = number.length < 4 ? "" : number;
   try {
     const SinglePlayerDetails = await prisma.players.findFirst({

@@ -1,4 +1,4 @@
-function generateToken(length) {
+function tokenGenerator(length) {
   //edit the token allowed characters
   var a =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".split("");
@@ -10,4 +10,4 @@ function generateToken(length) {
   return b.join("");
 }
 
-module.exports = generateToken
+module.exports = tokenGenerator

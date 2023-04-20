@@ -622,7 +622,6 @@ const rejectTeamRequest = catchAsyncErrors(async (req, res, next) => {
 });
 
 const disqualifyTeam = catchAsyncErrors(async (req, res, next) => {
-  console.log(req.body)
   const {tournament_teams_id} = req.body
 
   await prisma.tournament_teams_reg_type.update({

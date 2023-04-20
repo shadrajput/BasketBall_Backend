@@ -1,7 +1,9 @@
 const catchAsyncErrors = require("../../middlewares/catchAsyncErrors")
 const bcrypt = require('bcrypt')
 const { PrismaClient } =  require('@prisma/client')
-const { comparePassword, generateToken } = require('../../middlewares/auth');
+const tokenGenerator = require("../../utils/tokenGenerator");
+const { comparePassword, generateToken  } = require('../../middlewares/auth');
+const registrationMail = require('../../routes/mail/registrationMail')
 const ErrorHandler = require("../../utils/ErrorHandler");
 const jwt = require("jsonwebtoken");
 const axios = require('axios')
@@ -29,7 +31,9 @@ const userSignup = catchAsyncErrors(async(req, res, next) =>{
     }
 
     const hashedPassword = await bcrypt.hash(password.trim(), 10)
-    await prisma.users.create({
+    const token = tokenGenerator(32);
+
+    const user_details = await prisma.users.create({
         data:{
             name: name.trim(),
             email: email.trim(),
@@ -41,8 +45,14 @@ const userSignup = catchAsyncErrors(async(req, res, next) =>{
             is_manager: false,
             is_admin: false,
             is_verified: false,
+            token
         }
     })
+    
+
+    const link = `http://127.0.0.1:5173/user/verify/${user_details.id}/${token}`
+
+    await registrationMail({name: user_details.name, email: user_details.email, link})
 
     res.status(201).json({success: true, message: 'Signup successfully'})
 })
@@ -83,7 +93,7 @@ const getUserData = catchAsyncErrors(async(req, res, next)=>{
 })
 
 const googleLogin = catchAsyncErrors(async(req, res, next)=>{
-    const accessToken = req.headers.authorization
+    const accessToken = req.body.access_token
 
     const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo",{
 		headers: {
@@ -115,11 +125,15 @@ const googleLogin = catchAsyncErrors(async(req, res, next)=>{
             })
 
             const token = generateToken(newUser.id);
-            return res.status(201).json({success: true, message: 'Signup successfull', token})
+            return res.status(201).json({success: true, message: 'Signup successfull', token, user: newUser})
         }
         else{
+            if(!existingUser.is_google){
+                return next(new ErrorHandler('Account already exist with this email', 400))
+            }
+
             const token = generateToken(existingUser.id);
-            return res.status(200).json({success: true, message: 'Login successfull', token})
+            return res.status(200).json({success: true, message: 'Login successfull', token, user: existingUser})
         }
     }
 })
@@ -152,15 +166,15 @@ const verifyAccount = catchAsyncErrors(async(req, res, next) => {
 
     let user = await prisma.users.findFirst({
         where: {
-            AND:{
-                id: Number(user_id),
-                token: token
-            }
+            AND:[
+                { id: Number(user_id) },
+                { token: token }
+            ]
         }
     })
 
     if(!user){
-        return next(new ErrorHandler('Link is expired', 400));
+        return next(new ErrorHandler('Your link has expired', 400));
     }
 
     user = null

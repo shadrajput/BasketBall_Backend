@@ -6,7 +6,7 @@ const router = express.Router()
 router.post('/', userSignup)
 router.post('/login', userLogin)
 router.get('/detail', getUserData)
-router.get('/google-login', googleLogin)
+router.post('/google-login', googleLogin)
 router.put('/update-profile', isAuthenticatedUser, updateUserProfile)
 router.get('/verify-account/:user_id/:token', verifyAccount)
 

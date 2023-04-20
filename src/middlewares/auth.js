@@ -111,7 +111,6 @@ exports.isAuthTournamentOrganizer = catchAsyncErrors(async (req, res, next) => {
   if (!req.user.is_organizer) {
     return next(new ErrorHandler("Unauthorized access", 401));
   }
-  console.log(req.body)
 
   const user_tournament = await prisma.tournaments.findFirst({
     where: {

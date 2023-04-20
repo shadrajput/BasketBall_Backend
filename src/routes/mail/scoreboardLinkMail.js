@@ -1,10 +1,10 @@
 const SendEmail = require('../../utils/SendEmail')
 
 // send email
-const ScoreboardLinkSender = async ({ scorer_email, link, team_1, team_2, match_start_date, match_start_time, address,}) => {
+const scoreboardLinkMail = async ({ scorer_email, link, team_1, team_2, match_start_date, match_start_time, address,}) => {
 
   const options = {
-    from: `Corporate Basketball League <${process.env.USER}>`,
+    from: `Corporate Basketball League <${process.env.EMAIL}>`,
     to: `${scorer_email}`,
     subject: "Scoreboard Access",
     html: `
@@ -26,13 +26,13 @@ const ScoreboardLinkSender = async ({ scorer_email, link, team_1, team_2, match_
           </div>
           <div style="width: 100%; padding: 0 30px;">
             <div>
-              <h4 style="font-weight: 400; font-size:0.9rem;"> <span style="font-weight: bold">Date:</span> ${match_start_date}</h4>
+              <h4 style="font-weight: 400; font-size:0.9rem;"> <span style="font-weight: bold">Date:</span> ${!match_start_date ? '--' : match_start_date}</h4>
             </div>
             <div>
-              <h4 style="font-weight: 400; font-size:0.9rem;"> <span style="font-weight: bold">Time:</span> ${match_start_time}</h4>
+              <h4 style="font-weight: 400; font-size:0.9rem;"> <span style="font-weight: bold">Time:</span> ${!match_start_time ? '--' : match_start_time}</h4>
             </div>
             <div>
-              <h4 style="font-weight: 400; font-size:0.9rem;"> <span style="font-weight: bold">Address:</span> ${address}</h4>
+              <h4 style="font-weight: 400; font-size:0.9rem;"> <span style="font-weight: bold">Address:</span> ${!address ? '--' : address}</h4>
             </div>
           </div>
           <div style="width: 100%; gap: 10px; padding: 20px 0; display: grid">
@@ -51,4 +51,4 @@ const ScoreboardLinkSender = async ({ scorer_email, link, team_1, team_2, match_
   };
   await SendEmail(options);
 };
-module.exports = ScoreboardLinkSender;
+module.exports = scoreboardLinkMail;

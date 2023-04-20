@@ -1,8 +1,7 @@
 const catchAsyncErrors = require("../../middlewares/catchAsyncErrors");
-const ScoreboardLinkSender = require("./scoreboardLink");
-const ErrorHandler = require('../../utils/ErrorHandler');
+const scoreboardLinkMail = require("./scoreboardLinkMail");
 
-const httpScoreboardLinkMail = catchAsyncErrors(async (req, res, next) => {
+const mailScoreboardLink = catchAsyncErrors(async (req, res, next) => {
 
   const { 
     match_id, 
@@ -16,7 +15,7 @@ const httpScoreboardLinkMail = catchAsyncErrors(async (req, res, next) => {
 
   const link = `http://127.0.0.1:5173/scoreboard/${match_id}/${scorer_token}`
 
-  await ScoreboardLinkSender({ 
+  await scoreboardLinkMail({ 
     scorer_email, 
     link, 
     team_1, 
@@ -30,5 +29,5 @@ const httpScoreboardLinkMail = catchAsyncErrors(async (req, res, next) => {
 })
 
 module.exports = {
-  httpScoreboardLinkMail,
+  mailScoreboardLink,
 };

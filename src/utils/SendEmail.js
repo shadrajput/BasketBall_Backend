@@ -9,8 +9,8 @@ const SendEmail = async (options) => {
       pass: process.env.EMAIL_GEN_PASSWORD, 
     },
   });
-
   const res = await transpoter.sendMail(options);
+  console.log(res)
 };
 
 module.exports= SendEmail

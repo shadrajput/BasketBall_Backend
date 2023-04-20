@@ -1,7 +1,7 @@
 const catchAsyncErrors = require("../../middlewares/catchAsyncErrors");
 const { PrismaClient } = require("@prisma/client");
 const ErrorHandler = require("../../utils/ErrorHandler");
-const generateToken = require("../../utils/tokenGenerator");
+const tokenGenerator = require("../../utils/tokenGenerator");
 const Joi = require("joi");
 const { MatchListGetschema } = require("./match.model");
 
@@ -196,7 +196,7 @@ const updateMatchScorer = catchAsyncErrors(async(req, res, next) => {
     }
   })
 
-  const token = generateToken(32);
+  const token = tokenGenerator(32);
 
   if(match_details.scorekeeper_id){
     await prisma.scorekeeper.update({
@@ -211,7 +211,7 @@ const updateMatchScorer = catchAsyncErrors(async(req, res, next) => {
       }
     })
 
-    res.status(200).json({ success: true, message: "Scorer updated successfully" });
+    res.status(200).json({ success: true, message: "Scorekeeper updated successfully" });
   }
   else{
     const scorekeeper_details = await prisma.scorekeeper.create({
@@ -232,7 +232,7 @@ const updateMatchScorer = catchAsyncErrors(async(req, res, next) => {
       },
     });
   
-    res.status(200).json({ success: true, message: "Scorer added successfully" });
+    res.status(200).json({ success: true, message: "Scorekeeper added successfully" });
   }
 });
 
