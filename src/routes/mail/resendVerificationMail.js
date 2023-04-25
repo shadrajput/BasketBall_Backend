@@ -1,7 +1,7 @@
 const SendEmail = require('../../utils/SendEmail')
 
 // send email
-const registrationMail = async ({ name, email, link }) => {
+const resendVerificationMail = async ({ name, email, link }) => {
   
   const options = {
     from: `Corporate Basketball League <${process.env.EMAIL}>`,
@@ -22,8 +22,7 @@ const registrationMail = async ({ name, email, link }) => {
           <div style="width: 100%; padding: 0px 30px; margin-top: 30px;">
             <div style="width: 100%; font-weight: 600; color: white; margin-top: auto; margin-bottom: auto; font-size: 1rem;">
               <p>Dear ${name},</p>
-              <p>Thank you for registering on our Basketball Website. We are excited to have you as a part of our community and hope that you will enjoy the resources and information we have to offer.</p>
-              <p>To complete your registration and start exploring the features of our website, we need to verify your email address. This is a standard procedure that ensures the security of your account and helps us keep our website free from spammers.</p>
+
               <p>To verify your email address, simply click on the link provided below:</p>
               <h3> 
                 <a href=${link} style="text-decoration: none;">verify email</a>
@@ -43,4 +42,4 @@ const registrationMail = async ({ name, email, link }) => {
   };
   await SendEmail(options);
 };
-module.exports = registrationMail;
+module.exports = resendVerificationMail;

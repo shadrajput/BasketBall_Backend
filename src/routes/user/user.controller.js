@@ -4,6 +4,8 @@ const { PrismaClient } =  require('@prisma/client')
 const tokenGenerator = require("../../utils/tokenGenerator");
 const { comparePassword, generateToken  } = require('../../middlewares/auth');
 const registrationMail = require('../../routes/mail/registrationMail')
+const resendVerificationMail = require('../../routes/mail/resendVerificationMail')
+const resetPassword = require('../../routes/mail/resetPassword')
 const ErrorHandler = require("../../utils/ErrorHandler");
 const jwt = require("jsonwebtoken");
 const axios = require('axios')
@@ -14,12 +16,24 @@ const userSignup = catchAsyncErrors(async(req, res, next) =>{
     const {email, password} = req.body
     const name = req.body.fullname;
     const mobile = req.body.phone
+    const recaptcha = req.body.recaptcha
+
+    const recapthaResponse = await axios({
+        url: `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptcha}`,
+        method: 'POST'
+    })
+
+    console.log(recapthaResponse.data)
+
+    if(!recapthaResponse.data.success){
+        return next(new ErrorHandler('Recaptcha verification failed', 500))
+    }
 
     //checking mobile number already exist
     let user = await prisma.users.findFirst({where: {mobile}});
 
     if(user){
-        return next(new ErrorHandler('User already exists with this mobile number'))
+        return next(new ErrorHandler('User already exists with this mobile number', 400))
     }
 
     //checking email already exist
@@ -27,7 +41,7 @@ const userSignup = catchAsyncErrors(async(req, res, next) =>{
     user = await prisma.users.findUnique({where: {email}});
 
     if(user){
-        return next(new ErrorHandler('User already exists with this email'))
+        return next(new ErrorHandler('User already exists with this email', 400))
     }
 
     const hashedPassword = await bcrypt.hash(password.trim(), 10)
@@ -35,7 +49,7 @@ const userSignup = catchAsyncErrors(async(req, res, next) =>{
 
     const user_details = await prisma.users.create({
         data:{
-            name: name.trim(),
+            name: name,
             email: email.trim(),
             password: hashedPassword,
             mobile: mobile.trim(),
@@ -60,7 +74,14 @@ const userSignup = catchAsyncErrors(async(req, res, next) =>{
 const userLogin = catchAsyncErrors(async(req, res, next) =>{
     const {mobile, password} = req.body
     const user = await prisma.users.findUnique({
-        where:{mobile}
+        where:{mobile},
+        include:{
+            players: {
+                select: {
+                    id: true,
+                },
+            }
+        }
     });
 
     
@@ -73,6 +94,79 @@ const userLogin = catchAsyncErrors(async(req, res, next) =>{
 
     res.status(200).json({success: true, message: 'Login successful', token, user })
     
+})
+
+const resendVerificationEmail = catchAsyncErrors(async(req, res, next) => {
+    const user = await prisma.users.findUnique({
+        where:{
+            id: req.user.id
+        }
+    })
+
+    const link = `http://127.0.0.1:5173/user/verify/${user.id}/${user.token}`
+
+    await resendVerificationMail({name: user.name, email: user.email, link})
+
+    res.status(200).json({success: true, message: 'Link has been sent to your email'})
+})
+
+const sendResetPasswordLink = catchAsyncErrors(async(req, res, next) => {
+    const {email} = req.body;
+    
+    const user = await prisma.users.findFirst({
+        where:{
+            email
+        }
+    })
+
+    if(!user){
+        return next(new ErrorHandler('User not found with this email', 400))
+    }
+
+    const token = tokenGenerator(32)
+
+    await prisma.users.update({
+        where:{
+            id: user.id
+        },
+        data:{
+            token
+        }
+    })
+    const link = `http://127.0.0.1:5173/reset-password/${token}`
+
+    await resetPassword({name: user.name, email: user.email, link})
+
+    res.status(200).json({success: true, message: 'Reset password link has been sent to your email'})
+})
+
+const resetUserPassword = catchAsyncErrors(async(req, res, next)=>{
+    const {token, newPassword} = req.body
+
+    console.log(token, newPassword)
+    const user = await prisma.users.findFirst({
+        where:{
+            token
+        }
+    })
+
+    if(!user){
+        return next(new ErrorHandler('Your link has been expired', 400))
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword.trim(), 10)
+
+    await prisma.users.update({
+        where:{
+            id: user.id,
+        },
+        data:{
+            password: hashedPassword,
+            token: null
+        }
+    })
+
+    res.status(200).json({success: true, message: 'Password updated successfully'})
 })
 
 const getUserData = catchAsyncErrors(async(req, res, next)=>{
@@ -114,7 +208,18 @@ const googleLogin = catchAsyncErrors(async(req, res, next)=>{
         const email = response.data.email;
         // const photo = response.data.picture
 
-        const existingUser = await prisma.users.findFirst({where:{email}})
+        const existingUser = await prisma.users.findFirst(
+            {
+                where:{email},
+                include:{
+                    players: {
+                        select: {
+                            id: true,
+                        },
+                    }
+                }
+            },
+        )
 
         if(!existingUser){
             const newUser = await prisma.users.create({
@@ -195,7 +300,6 @@ const verifyAccount = catchAsyncErrors(async(req, res, next) => {
         }
     })
 
-
     res.status(200).json({success: true, message: 'Account verified successfully'})
 })
 
@@ -203,6 +307,9 @@ const verifyAccount = catchAsyncErrors(async(req, res, next) => {
 module.exports = {
     userSignup, 
     userLogin,
+    resendVerificationEmail,
+    sendResetPasswordLink,
+    resetUserPassword,
     getUserData,
     googleLogin,
     updateUserProfile,
