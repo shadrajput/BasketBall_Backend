@@ -4,6 +4,7 @@ const ErrorHandler = require("../../utils/ErrorHandler");
 const ImageKit = require("imagekit");
 const formidable = require("formidable");
 const fs = require("fs");
+const deleteTournamentFunc = require("../../helper/deleteTournamentFunc")
 
 const prisma = new PrismaClient();
 
@@ -11,6 +12,12 @@ const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
+});
+
+const getAdminDashboardData = catchAsyncErrors(async (req, res, next) => {
+  
+
+  res.status(200).json({ success: true, tournaments });
 });
 
 const getTournamentRequest = catchAsyncErrors(async (req, res, next) => {
@@ -21,21 +28,19 @@ const getTournamentRequest = catchAsyncErrors(async (req, res, next) => {
     },
   });
 
-  if (tournaments.length == 0) {
-    return next(new ErrorHandler("No tournament requests found"));
-  }
-
   res.status(200).json({ success: true, tournaments });
 });
 
 const approveTournamentRequest = catchAsyncErrors(async (req, res, next) => {
   const tournament_id = Number(req.params.tournament_id);
-  await prisma.tournaments.findMany({
+  await prisma.tournaments.update({
     where: {
       id: tournament_id,
-      is_approved: true,
-      status: 1,
     },
+    data:{
+      is_approved: true,
+      status: 1
+    }
   });
 
   res
@@ -61,46 +66,23 @@ const cancelTournamentRequest = catchAsyncErrors(async (req, res, next) => {
 });
 
 const deleteTournament = catchAsyncErrors(async (req, res, next) => {
-  const tournament_id = Number(req.params.tournament_id);
+  const tournament_id = Number(req.params.tournament_id)
 
-  await prisma.tournament_referees.deleteMany({
-    where: {
-      tournament_id,
-    },
-  });
+  //checking if matches were created or not
+  const matches = await prisma.matches.findFirst({ 
+    where:{
+      tournament_id
+    }
+  })
 
-  await prisma.tournament_sponsors.deleteMany({
-    where: {
-      tournament_id,
-    },
-  });
-
-  const tournament = await prisma.tournaments.delete({
-    where: {
-      id: tournament_id,
-    },
-  });
-
-  const user_tournaments = await prisma.tournaments.findMany({
-    where: {
-      user_id: tournament.user_id,
-    },
-  });
-
-  if (user_tournaments.length == 0) {
-    await prisma.users.update({
-      where: {
-        id: tournament.user_id,
-      },
-      data: {
-        is_organizer: false,
-      },
-    });
+  if(matches){
+    return next(new ErrorHandler("Can't delete tournament", 400));
   }
 
-  res
-    .status(200)
-    .json({ success: true, message: "Tournament deleted successfully" });
+  
+  await deleteTournamentFunc(tournament_id)
+
+  res.status(200).json({ success: true, message: 'Tournament deleted successfully' });
 });
 
 const deleteTeam = catchAsyncErrors(async (req, res, next) => {
