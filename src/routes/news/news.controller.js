@@ -38,6 +38,7 @@ const addnews = catchAsyncErrors(async (req, res, next) => {
                     photo: photo,
                     title: NewsInfo.NewsInfo.title,
                     description: NewsInfo.NewsInfo.description,
+                    tags: NewsInfo.NewsInfo.tags
                 },
             });
 
