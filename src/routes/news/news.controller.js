@@ -44,20 +44,11 @@ const addnews = catchAsyncErrors(async (req, res, next) => {
             res.status(201).json({
                 data: data,
                 success: true,
-                message: "News Added successfull.",
+                message: "News added successfully",
             });
         } catch (error) {
             next(error)
         }
-
-
-        // myPromise.then(async () => {
-
-        //     let { title, description, created_at } = fields
-
-
-        //     res.status(201).json({ success: true, message: "News added successfull." })
-        // })
 
     });
 

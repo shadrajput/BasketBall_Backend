@@ -23,8 +23,6 @@ const userSignup = catchAsyncErrors(async(req, res, next) =>{
         method: 'POST'
     })
 
-    console.log(recapthaResponse.data)
-
     if(!recapthaResponse.data.success){
         return next(new ErrorHandler('Recaptcha verification failed', 500))
     }
@@ -84,7 +82,6 @@ const userLogin = catchAsyncErrors(async(req, res, next) =>{
         }
     });
 
-    
     if(!user || !await comparePassword(password, user.password)){
         return next(new ErrorHandler('Invalid mobile or password', 400));
     }
@@ -143,7 +140,6 @@ const sendResetPasswordLink = catchAsyncErrors(async(req, res, next) => {
 const resetUserPassword = catchAsyncErrors(async(req, res, next)=>{
     const {token, newPassword} = req.body
 
-    console.log(token, newPassword)
     const user = await prisma.users.findFirst({
         where:{
             token
