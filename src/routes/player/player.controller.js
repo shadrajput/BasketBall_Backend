@@ -49,6 +49,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       }
 
       let photo = "";
+      
       photo = await uploadLogo(files, photo);
       const data = await prisma.players.create({
         data: {
@@ -267,17 +268,15 @@ const deletePlayerDetails = catchAsyncErrors(async (req, res, next) => {
 // ------------------ Upload_logo -------------------
 // ----------------------------------------------------
 async function uploadLogo(files, photo) {
-  // if (!files || !files.logo) {
-  //   return photo.length <= 2 ? DefaultplayerImage : photo;
-  // }
+  if (!files || !files.logo) {
+    return photo.length <= 2 ? DefaultplayerImage : photo;
+  }
+
   try {
-    if (files.logo && files.logo.originalFilename != "" && files.logo.size != 0){
-      if (photo) {
-        await deleteImage(photo);
-      }
-      return await uploadImage(files.logo, "player_image");
+    if (photo && photo != DefaultplayerImage) {
+      await deleteImage(photo);
     }
-    return null
+    return await uploadImage(files.logo, "player_image");
   } catch (error) {
     throw new Error(error.message);
   }

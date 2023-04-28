@@ -15,9 +15,17 @@ const imagekit = new ImageKit({
 });
 
 const getAdminDashboardData = catchAsyncErrors(async (req, res, next) => {
-  
+  const total_users = await prisma.users.count()
+  const ongoing_tournaments = await prisma.tournaments.count({
+    where:{
+      status: 2
+    }
+  })
 
-  res.status(200).json({ success: true, tournaments });
+  const total_teams = await prisma.teams.count()
+  const total_players = await prisma.players.count()
+
+  res.status(200).json({ success: true, total_users, ongoing_tournaments, total_teams, total_players });
 });
 
 const getTournamentRequest = catchAsyncErrors(async (req, res, next) => {
@@ -190,6 +198,7 @@ const deletePlayer = catchAsyncErrors(async (req, res, next) => {
 
 module.exports = {
   getTournamentRequest,
+  getAdminDashboardData,
   approveTournamentRequest,
   cancelTournamentRequest,
   deleteTournament,

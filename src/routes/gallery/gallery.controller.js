@@ -44,7 +44,7 @@ const addgallery = catchAsyncErrors(async (req, res, next) => {
         res.status(200).json({
             data: data,
             success: true,
-            message: "Gallery Add Success"
+            message: "Gallery image uploaded successfully"
         })
 
     });
@@ -56,16 +56,28 @@ const addgallery = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 // -------------------- all_gallery --------------------
 // ----------------------------------------------------
-const allGellery = catchAsyncErrors(async (req, res, next) => {
-    let { page } = req.params;
-
-    const allGellery = await prisma.gallery.findMany({
-        skip: page * 10,
-        take: 10,
+const allGallery = catchAsyncErrors(async (req, res, next) => {
+    let { page, category } = req.params;
+    const itemsPerPage = 10
+    
+    const allImages = await prisma.gallery.findMany({
+        where:{
+            category: category == 'all' ? undefined : category
+        },
+        skip: page * itemsPerPage,
+        take: itemsPerPage,
     })
 
+    const totalImages = await prisma.gallery.count({
+        where:{
+            category: category == 'all' ? undefined : category
+        }
+    })
+
+    console.log(totalImages)
     res.status(200).json({
-        data: allGellery,
+        data: allImages,
+        pageCount: totalImages / itemsPerPage,
         success: true,
         message: "All Gallery"
     })
@@ -119,38 +131,34 @@ const updateGalleryDetails = catchAsyncErrors(async (req, res, next) => {
 // ------------------ Delete_Gallery -------------------
 // ----------------------------------------------------
 const deleteGalleryDetails = catchAsyncErrors(async (req, res, next) => {
-
     const { id } = req.params
-  const deleteGalleryDetails =  await prisma.gallery.delete({
-        where: {
-            id: Number(id)
+
+    const galleryDetails = await prisma.gallery.delete({
+        where:{
+        id: Number(id),
         }
     })
 
-    res.status(200).json({
-        deleteGalleryDetails : deleteGalleryDetails ,
-         success: true,
-        message: "News details deleted"
-    })
+    await deleteImage(galleryDetails.photo)
+
+    res.status(200).json({success: true, message: 'Gallery Image deleted successfully'})
 })
 
 // ----------------------------------------------------
 // ------------------ Upload_image -------------------
 // ----------------------------------------------------
-async function uploadLogo(files, photo) {
+async function uploadLogo(files) {
     try {
-        return await uploadImage(files.photo, "player_image");
+        return await uploadImage(files.photo, "gallery");
     } catch (error) {
         throw new Error(error.message);
     }
 }
 
 
-
-
 module.exports = {
     addgallery,
-    allGellery,
+    allGallery,
     oneGalleryDetails,
     updateGalleryDetails,
     deleteGalleryDetails

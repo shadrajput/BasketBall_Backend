@@ -4,7 +4,7 @@ const ErrorHandler = require("../../utils/ErrorHandler");
 const ImageKit = require("imagekit");
 const formidable = require("formidable");
 const fs = require("fs");
-const { deleteImage } = require("../../helper/imageUpload");
+const { uploadImage, deleteImage, tournamentDefaultImage } = require("../../helper/imageUpload");
 const deleteTournamentFunc = require("../../helper/deleteTournamentFunc")
 
 const prisma = new PrismaClient();
@@ -14,44 +14,6 @@ const imagekit = new ImageKit({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT,
 });
-
-const uploadImage = async (image, next, folderName) =>{
-  const ext = image.mimetype.split("/")[1].trim();
-        
-  if (image.size >= 2000000) {
-    // 2000000(bytes) = 2MB
-    return next(
-      new ErrorHandler("Photo size should be less than 2MB", 400)
-    );
-  }
-  if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-    return next(
-      new ErrorHandler("Only JPG, JPEG or PNG logo is allowed", 400)
-    );
-  }
-
-  var oldPath = image.filepath;
-  var fileName = Date.now() + "_" + image.originalFilename;
-
-  const fileData = fs.readFileSync(oldPath) 
-  if(fileData){
-    const result = await imagekit.upload({
-      file: fileData,
-      fileName: fileName,
-      overwriteFile: true,
-      folder: folderName,
-    });
-
-    if(!result.url){
-      return next(new ErrorHandler('Failed to upload image', 500));
-    }
-    
-    return result.url
-  }
-  else{
-    return next(new ErrorHandler('Failed to read image', 400));
-  }
-}
 
 const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
   const form = new formidable.IncomingForm();
@@ -90,12 +52,13 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
     const myPromise = new Promise(async (resolve, reject) => {
 
       if (files.logo && files.logo.originalFilename != "" && files.logo.size != 0) {
-        const imageUrl = await uploadImage(files.logo, next, "/tournament_images") 
+        const imageUrl = await uploadImage(files.logo, "tournament_images") 
         logo = imageUrl;
       }
+
       if(fields.sponsors.length > 0 && files.sponsors_logo0) {
         for(let i = 0; i < fields.sponsors.length; i++){
-          const imageUrl = await uploadImage(files[`sponsors_logo${i}`], next, "/tournament_sponsors") 
+          const imageUrl = await uploadImage(files[`sponsors_logo${i}`], "tournament_sponsors") 
           fields.sponsors[i].logo = imageUrl;
         }
       }
@@ -106,7 +69,6 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
 
     myPromise.then(async () => {
       let {
-        user_id = 1,
         tournament_name,
         address,
         start_date,
@@ -126,8 +88,8 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
 
       const tournament_details =await prisma.tournaments.create({
         data: {
-          user_id: Number(user_id),
-          logo,
+          user_id: req.user.id,
+          logo : logo == '' ? tournamentDefaultImage : logo,
           tournament_name,
           address,
           start_date, //date should be in YYYY-mm-dd format
@@ -193,6 +155,22 @@ const tournamentOfOrganizer = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({ success: true, tournaments });
 });
 
+async function uploadTournamentLogo(files, logo) {
+
+  if (!files || !files.logo) {
+    return logo.length <= 2 ? tournamentDefaultImage : logo;
+  }
+
+  try {
+    if (logo && logo != tournamentDefaultImage) {
+      await deleteImage(logo);
+    }
+    return await uploadImage(files.logo, "tournament_images");
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
+
 const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
   const form = new formidable.IncomingForm();
 
@@ -206,11 +184,8 @@ const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
     }
     
     //uploading tournament logo
-    let logo = "";
-    if (files.logo && files.logo.originalFilename != "" && files.logo.size != 0) {
-      const imageUrl = await uploadImage(files.logo, next, "/tournament_images") 
-      logo = imageUrl;
-    } 
+    let logo = fields.old_url
+    logo = await uploadTournamentLogo(files, logo) 
 
     const tournament_id = Number(req.params.tournament_id);
     const {
@@ -234,7 +209,7 @@ const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
       },
       data: {
         tournament_name,
-        logo: logo !== '' ? logo : undefined,
+        logo,
         address,
         start_date: new Date(start_date), //date should be in YYYY-mm-dd format
         end_date: new Date(end_date),
@@ -255,22 +230,26 @@ const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
 
     //Adding tournament referees
     for(let i=0; i< referees.length; i++) {
-      await prisma.tournament_referees.create({
-        data:{
-          name: referees[i].name,
-          mobile: referees[i].mobile,
-          tournament_id
-        }
-      })
+      if(referees[i].name != '' && referees[i].mobile != ''){
+        await prisma.tournament_referees.create({
+          data:{
+            name: referees[i].name,
+            mobile: referees[i].mobile,
+            tournament_id
+          }
+        })
+      }
     }
 
     //Uploading logo of sponsors
     for(let i=0; i< sponsors.length; i++){
-      if (Object.keys(sponsors[i].logo).length == 0) {
-        //upload new logo
-        const imageUrl = await uploadImage(files[`sponsors_logo${i}`], next, "/tournament_sponsors") 
-        sponsors[i].logo = imageUrl
-      } 
+      if(sponsors[i].name != '' && sponsors[i].logo != ''){
+        if (Object.keys(sponsors[i].logo).length == 0) {
+          //upload new logo
+          const imageUrl = await uploadImage(files[`sponsors_logo${i}`], "tournament_sponsors") 
+          sponsors[i].logo = imageUrl
+        } 
+      }
     }
 
     //Finding tournament sponsors
@@ -295,13 +274,15 @@ const updateTournamentDetails = catchAsyncErrors(async (req, res, next) => {
     
     //Add new sponsors 
     for(let i=0; i< sponsors.length; i++){
-      await prisma.tournament_sponsors.create({
-        data:{
-          title: sponsors[i].name,
-          logo: sponsors[i].logo,
-          tournament_id
-        }
-      })
+      if(sponsors[i].name != '' && sponsors[i].logo != ''){
+        await prisma.tournament_sponsors.create({
+          data:{
+            title: sponsors[i].name,
+            logo: sponsors[i].logo,
+            tournament_id
+          }
+        })
+      }
     }
 
     res
@@ -411,6 +392,47 @@ const tournamentSchedule = catchAsyncErrors(async (req, res, next) => {
 
   return res.status(200).json({ success: true, schedule });
 });
+
+const uploadGalleryImage = catchAsyncErrors(async (req, res, next) => {
+    const {tournament_id} = req.params;
+
+    const form = new formidable.IncomingForm();
+    form.parse(req, async function (err, fields, files) {
+      if (err) {
+          return res.status(500).json({ success: false, message: err.message });
+      }
+
+      let photo = "";
+      photo = await uploadImage(files.image, 'gallery');
+      await prisma.gallery.create({
+          data: {
+              photo: photo,
+              category: fields.category,
+              tournament_id: Number(tournament_id)
+          },
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Gallery image uploaded successfully"
+      })
+
+    });
+})
+
+const deleteGalleryImage = catchAsyncErrors(async (req, res, next) => {
+  const {gallery_id} = req.params;
+
+  const galleryDetails = await prisma.gallery.delete({
+    where:{
+      id: Number(gallery_id),
+    }
+  })
+
+  await deleteImage(galleryDetails.photo)
+
+  res.status(200).json({success: true, message: 'Image deleted successfully'})
+})
 
 const startRegistration = catchAsyncErrors(async (req, res, next) => {
   const { tournament_id } = req.params;
@@ -1199,6 +1221,8 @@ module.exports = {
   deleteTournament,
   tournamentDetails,
   tournamentSchedule,
+  uploadGalleryImage,
+  deleteGalleryImage,
   startRegistration,
   closeRegistration,
   startTournament,

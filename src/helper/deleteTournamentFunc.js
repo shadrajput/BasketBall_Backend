@@ -71,6 +71,17 @@ const deleteTournamentFunc = async(tournament_id) =>{
     }
   })
 
+  
+  //Getting user id from tournament detail
+  const tournament_details = await prisma.tournaments.findUnique({
+    where:{
+      id: tournament_id
+    },
+    select:{
+      user_id: true
+    }
+  })
+  
   //Deleting tournament
   await prisma.tournaments.delete({
     where:{
@@ -78,15 +89,15 @@ const deleteTournamentFunc = async(tournament_id) =>{
     }
   })
 
-  //finding tournaments
+  //Finding tournaments of users
   const any_tournament = await prisma.tournaments.findFirst({
-    user_id: req.user.id
+    user_id: tournament_details.user_id
   })
 
   if(!any_tournament) { //updating user table
     await prisma.user.update({
       where:{
-        id: req.user.id
+        id: tournament_details.user_id
       },
       data:{
         is_organizer: false

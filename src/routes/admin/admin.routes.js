@@ -6,6 +6,7 @@ const {
 const {
   getTournamentRequest,
   approveTournamentRequest,
+  getAdminDashboardData,
   cancelTournamentRequest,
   deleteTournament,
   deleteTeam,
@@ -13,6 +14,13 @@ const {
 } = require("./admin.controller");
 
 const router = express.Router();
+
+router.get(
+  '/dashboard-details',  
+  isAuthenticatedUser,
+  isAuthenticatedAdmin, 
+  getAdminDashboardData
+);
 
 router.get(
   "/tournaments/requests",

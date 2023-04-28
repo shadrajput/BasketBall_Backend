@@ -135,16 +135,17 @@ const updateNewsDetails = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const deleteNewsDetails = catchAsyncErrors(async (req, res, next) => {
     const { id } = req.params
-    const deleteNewsDetails = await prisma.news.delete({
+    const newsDetails = await prisma.news.delete({
         where: {
             id: Number(id)
         }
     })
 
+    await deleteImage(newsDetails.photo)
+
     res.status(200).json({
-        deleteNewsDetails: deleteNewsDetails,
         success: true,
-        message: "News details deleted"
+        message: "News deleted successfully"
     })
 
 })
@@ -153,9 +154,9 @@ const deleteNewsDetails = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 // ------------------ Upload_image -------------------
 // ----------------------------------------------------
-async function uploadLogo(files, photo) {
+async function uploadLogo(files) {
     try {
-        return await uploadImage(files.photo, "player_image");
+        return await uploadImage(files.photo, "news");
     } catch (error) {
         throw new Error(error.message);
     }
