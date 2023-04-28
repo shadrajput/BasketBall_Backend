@@ -3,10 +3,12 @@ const fs = require("fs");
 const ErrorHandler = require("../utils/ErrorHandler");
 
 const DefaultteamImage =
-  "https://ik.imagekit.io/cpxhw6dfc/team_images/1680341770350_basketball_a1D05Joig.png";
+  "https://ik.imagekit.io/uz4hsgydu/Default/basketball_team_logo_2.webp?updatedAt=1682664521906";
 
 const DefaultplayerImage =
-  "https://ik.imagekit.io/cpxhw6dfc/team_images/1680341770350_basketball_a1D05Joig.png";
+  "https://ik.imagekit.io/uz4hsgydu/Default/player-default-profile.webp?updatedAt=1682665010247";
+
+const tournamentDefaultImage = 'https://ik.imagekit.io/uz4hsgydu/Default/tournament_logo_2.webp?updatedAt=1681908076262'
 
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
@@ -79,7 +81,5 @@ async function deleteImage(name) {
     return new ErrorHandler("Failed to update logo", 500);
   }
 }
-let image =
-  "https://ik.imagekit.io/cpxhw6dfc/team_images/1680499897385_indiana-pacers-logo_eFwaHX8zT.png";
 
-module.exports = { uploadImage, deleteImage, DefaultteamImage };
+module.exports = { uploadImage, deleteImage, DefaultteamImage, tournamentDefaultImage, DefaultplayerImage };

@@ -1,7 +1,7 @@
 const express = require("express");
 const {
   addgallery,
-  allGellery,
+  allGallery,
   oneGalleryDetails,
   updateGalleryDetails,
   deleteGalleryDetails,
@@ -12,7 +12,7 @@ const router = express.Router();
 router.post("/add", 
 // isAuthenticatedUser, 
 addgallery);
-router.get("/:page", allGellery);
+router.get("/:category/:page", allGallery);
 router.get("/:id", oneGalleryDetails);
 router.put("/update/:id", isAuthenticatedUser, updateGalleryDetails);
 router.delete("/delete/:id", isAuthenticatedUser, deleteGalleryDetails);

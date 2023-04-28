@@ -10,6 +10,8 @@ const {
   updateTournamentDetails,
   deleteTournament,
   tournamentDetails,
+  uploadGalleryImage,
+  deleteGalleryImage,
   tournamentSchedule,
   startRegistration,
   closeRegistration,
@@ -33,6 +35,20 @@ router.get("/", isAuthenticatedUser, allTournaments);
 router.get("/organizer", isAuthenticatedUser, tournamentOfOrganizer);
 
 router.get("/details/:tournament_id", isAuthenticatedUser, tournamentDetails);
+
+router.post(
+  "/gallery/:tournament_id", 
+  isAuthenticatedUser, 
+  isAuthTournamentOrganizer, 
+  uploadGalleryImage
+);
+
+router.delete(
+  "/gallery/:tournament_id/:gallery_id",
+  isAuthenticatedUser,
+  isAuthTournamentOrganizer,
+  deleteGalleryImage
+)
 
 router.get("/schedule/:tournament_id", tournamentSchedule);
 
