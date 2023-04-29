@@ -33,7 +33,7 @@ const addgallery = catchAsyncErrors(async (req, res, next) => {
         }
 
         let photo = "";
-        photo = await uploadLogo(files, photo);
+        photo = await uploadLogo(files);
         const data = await prisma.gallery.create({
             data: {
                 photo: photo,
@@ -56,7 +56,25 @@ const addgallery = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 // -------------------- all_gallery --------------------
 // ----------------------------------------------------
-const allGallery = catchAsyncErrors(async (req, res, next) => {
+const adminGallery = catchAsyncErrors(async (req, res, next) => {
+    let { page } = req.params;
+    const itemsPerPage = 10
+    
+    const allImages = await prisma.gallery.findMany({
+        skip: page * itemsPerPage,
+        take: itemsPerPage,
+    })
+
+    const totalImages = await prisma.gallery.count()
+
+    res.status(200).json({
+        data: allImages,
+        pageCount: totalImages / itemsPerPage,
+        success: true,
+    })
+})
+
+const allGallery =  catchAsyncErrors(async (req, res, next) => {
     let { page, category } = req.params;
     const itemsPerPage = 10
     
@@ -74,7 +92,6 @@ const allGallery = catchAsyncErrors(async (req, res, next) => {
         }
     })
 
-    console.log(totalImages)
     res.status(200).json({
         data: allImages,
         pageCount: totalImages / itemsPerPage,
@@ -159,6 +176,7 @@ async function uploadLogo(files) {
 module.exports = {
     addgallery,
     allGallery,
+    adminGallery,
     oneGalleryDetails,
     updateGalleryDetails,
     deleteGalleryDetails

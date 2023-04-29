@@ -10,7 +10,6 @@ const SendEmail = async (options) => {
     },
   });
   const res = await transpoter.sendMail(options);
-  console.log(res)
 };
 
 module.exports= SendEmail
