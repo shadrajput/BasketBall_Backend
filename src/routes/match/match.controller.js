@@ -14,8 +14,8 @@ async function getMatchList(req, res, next) {
       throw new Error(error.message);
     }
 
-    const { pageNo, status } = req.params;
-
+    let { pageNo, status } = req.params;
+    console.log(pageNo)
     const matchesList = await prisma.matches.findMany({
       where: {
         status: Number(status),
@@ -31,11 +31,16 @@ async function getMatchList(req, res, next) {
           },
         },
       },
-      skip: pageNo * 5,
-      take: 5,
+      skip: pageNo * 6,
+      take: 6,
     });
 
-    res.status(200).json({ success: true, data: matchesList });
+    const totalMatches = await prisma.matches.count();
+
+    res.status(200).json({ 
+      success: true, 
+      pageCount : totalMatches / 6 , 
+      data: matchesList });
   } catch (error) {
     next(error);
   }
