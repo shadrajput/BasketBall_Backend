@@ -60,7 +60,7 @@ const addnews = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const allNews = catchAsyncErrors(async (req, res, next) => {
     let { page } = req.params;
-    const itemsPerPage = 7
+    const itemsPerPage = 12
 
     const AllNews = await prisma.news.findMany({
         skip: page * itemsPerPage,

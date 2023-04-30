@@ -15,7 +15,7 @@ async function getMatchList(req, res, next) {
     }
 
     let { pageNo, status } = req.params;
-    console.log(pageNo)
+    const itemsPerPage = 6
     const matchesList = await prisma.matches.findMany({
       where: {
         status: Number(status),
@@ -31,15 +31,15 @@ async function getMatchList(req, res, next) {
           },
         },
       },
-      skip: pageNo * 6,
-      take: 6,
+      skip: pageNo * itemsPerPage,
+      take: itemsPerPage,
     });
 
     const totalMatches = await prisma.matches.count();
 
     res.status(200).json({ 
       success: true, 
-      pageCount : totalMatches / 6 , 
+      pageCount : Math.ceil(totalMatches / itemsPerPage), 
       data: matchesList });
   } catch (error) {
     next(error);
