@@ -67,9 +67,11 @@ const adminGallery = catchAsyncErrors(async (req, res, next) => {
 
     const totalImages = await prisma.gallery.count()
 
+    console.log(totalImages)
+
     res.status(200).json({
         data: allImages,
-        pageCount: totalImages / itemsPerPage,
+        pageCount: Math.ceil(totalImages / itemsPerPage),
         success: true,
     })
 })
@@ -94,7 +96,7 @@ const allGallery =  catchAsyncErrors(async (req, res, next) => {
 
     res.status(200).json({
         data: allImages,
-        pageCount: totalImages / itemsPerPage,
+        pageCount: Math.ceil(totalImages / itemsPerPage),
         success: true,
         message: "All Gallery"
     })
