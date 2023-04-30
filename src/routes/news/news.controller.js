@@ -60,14 +60,18 @@ const addnews = catchAsyncErrors(async (req, res, next) => {
 // ----------------------------------------------------
 const allNews = catchAsyncErrors(async (req, res, next) => {
     let { page } = req.params;
+    const itemsPerPage = 7
 
     const AllNews = await prisma.news.findMany({
-        skip: page * 12,
-        take: 12,
+        skip: page * itemsPerPage,
+        take: itemsPerPage,
     })
+
+    const totalNews = await prisma.news.count();
 
     res.status(200).json({
         AllNews: AllNews,
+        pageCount: Math.ceil(totalNews / itemsPerPage),
         success: true,
         message: "All News"
     })
