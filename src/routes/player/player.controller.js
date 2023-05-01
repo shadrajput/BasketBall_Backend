@@ -49,7 +49,7 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       }
 
       let photo = "";
-      
+
       photo = await uploadLogo(files, photo);
       const data = await prisma.players.create({
         data: {
@@ -78,10 +78,10 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
       })
 
       await prisma.users.update({
-        where:{
+        where: {
           id: req.user.id
         },
-        data:{
+        data: {
           is_player: true
         }
       })
@@ -103,10 +103,12 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 const allPlayers = catchAsyncErrors(async (req, res, next) => {
   let { page, PlayerName } = req.params;
   PlayerName = PlayerName == "search" ? "" : PlayerName;
+  const itemsPerPage = 10
+
   try {
     const all_players = await prisma.players.findMany({
-      skip: page * 10,
-      take: 10,
+      skip: page * itemsPerPage,
+      take: itemsPerPage,
       where: {
         first_name: {
           contains: PlayerName == "" ? "" : PlayerName,
@@ -126,7 +128,13 @@ const allPlayers = catchAsyncErrors(async (req, res, next) => {
       },
     });
 
-    return res.status(200).json({ success: true, data: all_players });
+    const totalPlayers = await prisma.players.count();
+
+    return res.status(200).json({ 
+      success: true, 
+      pageCount: Math.ceil(totalPlayers / itemsPerPage),
+      data: all_players 
+    });
   } catch (error) {
     next(error);
   }
