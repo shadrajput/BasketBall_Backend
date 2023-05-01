@@ -74,7 +74,6 @@ async function httpUpdateTeam(req, res, next) {
 
 async function httpGetAllTeams(req, res, next) {
   let { page, TeamName } = req.params;
-  console.log(page)
   TeamName = TeamName == "search" ? "" : TeamName;
   const itemsPerPage = 10
 
@@ -99,7 +98,7 @@ async function httpGetAllTeams(req, res, next) {
 
     return res.status(200).json({
       success: true,
-      pageCount: totalTeams / itemsPerPage,
+      pageCount: Math.ceil(totalTeams / itemsPerPage), 
       data: teams
     });
   } catch (error) {
