@@ -75,11 +75,13 @@ async function httpUpdateTeam(req, res, next) {
 async function httpGetAllTeams(req, res, next) {
   let { page, TeamName } = req.params;
   TeamName = TeamName == "search" ? "" : TeamName;
+  const itemsPerPage = 10
+
   try {
     const teams = await prisma.teams.findMany({
       orderBy: { matches_won: "desc" },
-      skip: page * 5,
-      take: 5,
+      skip: page * itemsPerPage,
+      take: itemsPerPage,
       where: {
         team_name: {
           contains: TeamName == "" ? "" : TeamName,
@@ -91,7 +93,14 @@ async function httpGetAllTeams(req, res, next) {
         users: true,
       },
     });
-    return res.status(200).json({ success: true, data: teams });
+
+    const totalTeams = await prisma.teams.count({})
+
+    return res.status(200).json({
+      success: true,
+      pageCount: Math.ceil(totalTeams / itemsPerPage), 
+      data: teams
+    });
   } catch (error) {
     next(error);
   }
