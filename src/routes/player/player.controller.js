@@ -31,22 +31,22 @@ const playerRegistration = catchAsyncErrors(async (req, res, next) => {
 
       const playerData = JSON.parse(fields?.data);
       const { basicInfo, gameInfo } = playerData.PlayerInfo;
-      const result = await prisma.players.findFirst({
-        where: {
-          AND: [
-            {
-              mobile: {
-                contains: basicInfo.mobile,
-                mode: "insensitive",
-              },
-            },
-          ],
-        },
-      });
+      // const result = await prisma.players.findFirst({
+      //   where: {
+      //     AND: [
+      //       {
+      //         mobile: {
+      //           contains: basicInfo.mobile,
+      //           mode: "insensitive",
+      //         },
+      //       },
+      //     ],
+      //   },
+      // });
 
-      if (result) {
-        return next(new ErrorHandler("Please Change Mobile Number"));
-      }
+      // if (result) {
+      //   return next(new ErrorHandler("Please Change Mobile Number"));
+      // }
 
       let photo = "";
 
