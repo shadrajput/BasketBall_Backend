@@ -32,7 +32,15 @@ app.use("/imagekit", imagekitAuthRouter);
 app.use("/mail", mailRouter);
 app.use("/team", teamRouter);
 
+
+// if(process.env.NODE_ENV == 'development'){
+  app.use(express.static('client/dist'))
+  app.get("/*", (req, res) => 
+    res.sendFile(path.resolve(__dirname,'..','client','dist','index.html'))
+  )
+// }
 //Middleware for errors
 app.use(errorMiddleware);
+
 
 module.exports = app;
