@@ -133,6 +133,10 @@ async function httpPostTournament(req, res) {
         team_id: data.team_id,
       },
     });
+<<<<<<< HEAD
+=======
+
+>>>>>>> refs/remotes/origin/master
     await prisma.tournament_teams_reg_type.create({
       data:{
         tournament_team_id: result.id,
@@ -140,6 +144,10 @@ async function httpPostTournament(req, res) {
         gender_type: data.tournament_category,
       }
     })
+<<<<<<< HEAD
+=======
+
+>>>>>>> refs/remotes/origin/master
     return res.status(201).json({ success: true, data: result });
   } catch (error) {
     next(error);
