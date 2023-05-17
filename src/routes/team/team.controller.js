@@ -133,6 +133,15 @@ async function httpPostTournament(req, res) {
         team_id: data.team_id,
       },
     });
+
+    await prisma.tournament_teams_reg_type.create({
+      data:{
+        tournament_team_id: result.id,
+        age_category: data.age_cutoff,
+        gender_type: data.tournament_category,
+      }
+    })
+
     return res.status(201).json({ success: true, data: result });
   } catch (error) {
     next(error);
