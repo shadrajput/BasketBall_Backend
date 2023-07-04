@@ -207,6 +207,7 @@ const updatePlayerDetails = catchAsyncErrors(async (req, res, next) => {
   form.parse(req, async function (err, fields, files) {
 
     try {
+      
       if (err) {
         return res.status(500).json({ success: false, message: err.message });
       }

@@ -109,7 +109,7 @@ const updateNewsDetails = catchAsyncErrors(async (req, res, next) => {
 
     const updateNewsDetails = await prisma.news.update({
         where: {
-            id: Number(id)
+            id: Number(id) 
         },
         data: {
             title: title,

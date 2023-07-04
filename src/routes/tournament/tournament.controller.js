@@ -18,13 +18,13 @@ const imagekit = new ImageKit({
 const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
   const form = new formidable.IncomingForm();
   form.parse(req, async function (err, fields, files) {
-    
     fields.referees = JSON.parse(fields.referees)
     fields.sponsors = JSON.parse(fields.sponsors)
 
     if (err) {
       return res.status(500).json({ success: false, message: err.message });
     }
+    
     const result = await prisma.tournaments.findFirst({
       where: {
         AND: [
