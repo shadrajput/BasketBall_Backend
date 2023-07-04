@@ -114,7 +114,8 @@ model tournaments {
   level                String
   status               Int                   @default(0)
   is_approved          Boolean               @default(false)
-  prize                String?
+  winner_prize         String?
+  runner_prize         String?
   is_registration_open Boolean               @default(false)
   is_details_editable  Boolean               @default(true)
   user_id              Int
@@ -132,6 +133,7 @@ model tournament_referees {
   id            Int         @id @default(autoincrement())
   name          String
   mobile        String
+  type          String
   tournament_id Int
   created_at    DateTime    @default(now()) @db.Timestamp(6)
   tournaments   tournaments @relation(fields: [tournament_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "player_table")

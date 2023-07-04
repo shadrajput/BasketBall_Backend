@@ -76,7 +76,8 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
         gender_types,
         age_categories,
         level,
-        prize,
+        winner_prize,
+        runner_prize,
         referees,
         sponsors
       } = fields;
@@ -97,7 +98,8 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
           gender_types,
           age_categories,
           level,
-          prize,
+          winner_prize,
+          runner_prize
         },
       });
 
@@ -106,7 +108,8 @@ const tournamentRegistration = catchAsyncErrors(async (req, res, next) => {
           data:{
             tournament_id: tournament_details.id,
             name: referee.name,
-            mobile: referee.mobile
+            mobile: referee.mobile,
+            type: referee.type
           }
         })
       })
